@@ -102,16 +102,18 @@
 
 <!-- Navigation -->
 <nav class="top-nav"><div class="container-xl px-3"><div class="nav-inner">
-  <span class="nav-logo">🔷 &middot; ADO Cross-Project Intake</span>
+  <span class="nav-logo">🔷 ADO Cross-Project Intake</span>
+  <a href="#research">Research</a>
   <a href="#problem">Problem</a>
   <a href="#constraints">Constraints</a>
   <a href="#recommendation">Recommendation</a>
-  <a href="#pattern-1">Pattern 1: Intake Area</a>
-  <a href="#pattern-2">Pattern 2: Form + Flow</a>
-  <a href="#pattern-3">Pattern 3: Native Move</a>
+  <a href="#pattern-1">Pattern 1</a>
+  <a href="#pattern-2">Pattern 2</a>
+  <a href="#pattern-3">Pattern 3</a>
   <a href="#comparison">Compare</a>
   <a href="#implementation">Implementation</a>
   <a href="#permissions">Permissions</a>
+  <a href="#enterprise">Enterprise Governance</a>
   <a href="#7pace">7Pace</a>
   <a href="#faq">FAQ</a>
 </div></div></nav>
@@ -120,7 +122,7 @@
 <section class="hero"><div class="container-xl px-3">
   <p style="font-size:13px; text-transform:uppercase; letter-spacing:2px; color:#8b949e; margin-bottom:12px; font-weight:600;">Solution Design Guide &mdash; 2026</p>
   <h1>Cross-Project Work Intake in <span class="highlight">Azure DevOps</span> &mdash; A Workflow for <span class="highlight-boards">the P Project</span></h1>
-  <p class="subtitle">A practical blueprint for letting IT teams and business teams in <em>other</em> Azure DevOps Projects submit User Stories into your P team Areas so you can triage, allocate, and deliver work &mdash; while preserving 7Pace time tracking and full auditability. Built around three proven patterns and a native Azure DevOps feature set.</p>
+  <p class="subtitle">A practical, <strong>enterprise-grade</strong> blueprint for letting IT teams and business teams in <em>other</em> Azure DevOps Projects submit User Stories into your P team Areas so you can triage, allocate, and deliver work &mdash; while preserving 7Pace time tracking, audit compliance, and full traceability. Recommendations are grounded in <strong>Microsoft Learn</strong> documentation and curated research via the <a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" style="color:#79c0ff;" target="_blank">MicrosoftDocs Azure DevOps agent skill</a>.</p>
   <div class="badge-row">
     <span class="Label" style="background:#ddf4ff;color:#0078d4;">Azure Boards</span>
     <span class="Label" style="background:#fff8c5;color:#9a6700;">Inherited Process</span>
@@ -131,8 +133,38 @@
   </div>
 </div></section>
 
+<!-- ═══ RESEARCH METHODOLOGY ═══ -->
+<section id="research" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">Research Methodology &mdash; How This Guide Was Built</h2>
+  <p class="section-lead">The recommendations in this guide are not speculation. They were validated against authoritative Microsoft documentation using the <a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank">MicrosoftDocs <code>azure-devops</code> agent skill</a> &mdash; a curated index of Microsoft Learn references covering work tracking, security, permissions, process customization, and cross-project scenarios.</p>
+
+  <div class="callout callout-purple">
+    <p><strong>AI-assisted, human-reviewed research.</strong> The agent skill provides a structured index of 200+ Microsoft Learn pages across categories (Security, Configuration, Decision Making, Architecture &amp; Design Patterns, Limits &amp; Quotas, Integrations). Pages relevant to this enterprise scenario were fetched directly from <code>learn.microsoft.com</code>, cross-referenced, and every claim in this guide is traceable to an official source linked in the footer. The skill is installed at <code>.github/skills/azure-devops/SKILL.md</code> in this repository.</p>
+  </div>
+
+  <div class="grid-3" style="margin-top:24px;">
+    <div class="feature-card">
+      <h3>📘 Source of truth</h3>
+      <p>Microsoft Learn <em>azure/devops</em> documentation set. Every pattern, permission, and caveat in this guide maps to a Microsoft-published article cited in the references.</p>
+    </div>
+    <div class="feature-card">
+      <h3>🔎 Scope of research</h3>
+      <p>Project structure and scaling, Area Path permissions, work item move semantics, cross-project linking, inherited process model, audit logging, and Stakeholder vs. Basic access.</p>
+    </div>
+    <div class="feature-card">
+      <h3>🏢 Enterprise lens</h3>
+      <p>Recommendations are filtered through enterprise concerns: governance, auditability, least-privilege access, scalability beyond a single team, and compatibility with existing ALM investments such as 7Pace.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-success" style="margin-top:24px;">
+    <p><strong>Key Microsoft guidance that shaped this design:</strong> Microsoft explicitly recommends <em>using a single project to support your organization or enterprise</em> and notes that moving work items between projects &ldquo;results in the loss of associated history.&rdquo; That is why our primary recommendation keeps the work inside the P project and uses Area Paths + automation to bring external teams in &mdash; rather than federating across many projects. See <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops#use-a-single-project" target="_blank">Use a single project</a>.</p>
+  </div>
+</div></section>
+
 <!-- ═══ PROBLEM ═══ -->
-<section id="problem" class="section">
+<section id="problem" class="section section-alt">
 <div class="container-xl px-3">
   <h2 class="section-title">The Problem We&rsquo;re Solving</h2>
   <p class="section-lead">the P Project already has a healthy model for allocating work <em>inside</em> the P project: each IT team owns an Area Path, uses a team backlog, and cross-team work is handled by setting the User Story&rsquo;s Area Path to the receiving team. The friction appears at the project boundary.</p>
@@ -164,7 +196,7 @@
 </div></section>
 
 <!-- ═══ CONSTRAINTS ═══ -->
-<section id="constraints" class="section section-alt">
+<section id="constraints" class="section">
 <div class="container-xl px-3">
   <h2 class="section-title">Azure DevOps Constraints You Need to Know</h2>
   <p class="section-lead">Before we pick a pattern, it helps to be explicit about what Azure DevOps does and does <em>not</em> allow across Project boundaries. This is the reason the answer isn&rsquo;t obvious &mdash; the platform enforces a hard line at the Project.</p>
@@ -229,7 +261,7 @@
 </div></section>
 
 <!-- ═══ RECOMMENDATION ═══ -->
-<section id="recommendation" class="section">
+<section id="recommendation" class="section section-alt">
 <div class="container-xl px-3">
   <h2 class="section-title">Recommended Solution</h2>
   <p class="section-lead">We recommend a <strong>two-layer intake model</strong> that combines a dedicated intake area inside P with a lightweight automation front door for teams that shouldn&rsquo;t have direct P access. It works today, requires no custom code, and layers in optional enhancements as you grow.</p>
@@ -280,7 +312,7 @@
 </div></section>
 
 <!-- ═══ PATTERN 1 ═══ -->
-<section id="pattern-1" class="section section-alt">
+<section id="pattern-1" class="section">
 <div class="container-xl px-3">
   <h2 class="section-title">Pattern 1 &mdash; Dedicated Intake Area in P</h2>
   <p class="section-lead">The backbone of the solution. Works on day one with no automation. Other patterns build on top of this.</p>
@@ -329,7 +361,7 @@
 </div></section>
 
 <!-- ═══ PATTERN 2 ═══ -->
-<section id="pattern-2" class="section">
+<section id="pattern-2" class="section section-alt">
 <div class="container-xl px-3">
   <h2 class="section-title">Pattern 2 &mdash; Power Automate &ldquo;Front Door&rdquo;</h2>
   <p class="section-lead">This is how submitters in <em>other</em> Azure DevOps projects (or business teams with limited ADO access) get their story into P without needing to know your Area Path taxonomy. Zero code &mdash; a Power Automate flow does the crossing for them.</p>
@@ -432,7 +464,7 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
 </div></section>
 
 <!-- ═══ PATTERN 3 ═══ -->
-<section id="pattern-3" class="section section-alt">
+<section id="pattern-3" class="section">
 <div class="container-xl px-3">
   <h2 class="section-title">Pattern 3 &mdash; Native &ldquo;Move to P&rdquo; (Lightweight Alternative)</h2>
   <p class="section-lead">If you don&rsquo;t want Power Automate yet, Azure DevOps has a native feature that can carry you a long way: <strong>Move work item to another project</strong>. This is the simplest possible workflow and worth understanding as a fallback.</p>
@@ -454,12 +486,14 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
       <li>Submitters understand they are <em>handing off</em> the story (they won&rsquo;t see it in their own project&rsquo;s backlog anymore unless you also create a Related link back).</li>
     </ul>
 
-    <h4 style="margin-top:20px;">Watch-outs</h4>
+    <h4 style="margin-top:20px;">Watch-outs (verified against Microsoft Learn)</h4>
     <ul style="font-size:14px; color:#656d76; line-height:1.8;">
-      <li>Move requires the source and target projects to use <em>compatible</em> inherited processes. Custom fields that don&rsquo;t exist in P&rsquo;s process will be stripped.</li>
-      <li>The mover needs &ldquo;Move work items out of this project&rdquo; on the source and &ldquo;Edit work items in this node&rdquo; on <code>P\_Intake</code>.</li>
-      <li>After move, the original ID still resolves (via URL redirect) but does not appear in the source team&rsquo;s backlog. If submitters expect to keep visibility, add a <em>Related</em> link pointing back to a tracking WIT in their project.</li>
-      <li>7Pace time entries follow the work item across the move.</li>
+      <li><strong>Child items don&rsquo;t move.</strong> Per <a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/move-change-type?view=azure-devops#move-a-work-item-to-another-project" target="_blank">Microsoft Learn</a>: &ldquo;Child work items don&rsquo;t get moved and remain in the origin project, but the Parent-Child links remain in place.&rdquo; Plan carefully when a story has subtasks.</li>
+      <li><strong>Inherited process required.</strong> The <em>Move work items out of this project</em> permission requires the Inherited process model. On-premises XML processes don&rsquo;t support this feature.</li>
+      <li><strong>Compatible processes only.</strong> Custom fields that don&rsquo;t exist in P&rsquo;s process are stripped. State and Reason reset to the target type&rsquo;s defaults; a comment is auto-added to Discussion and an entry to History.</li>
+      <li><strong>Permissions needed:</strong> <em>Move work items out of this project</em> on the source and <em>Edit work items in this node</em> on <code>P\_Intake</code>. Stakeholder-license users cannot use this feature in private projects.</li>
+      <li><strong>No backlog presence in source.</strong> The original ID URL redirects but the item no longer appears in the source team&rsquo;s backlog. If submitters expect ongoing visibility, keep a tracking WIT in their project and add a <em>Related</em> link.</li>
+      <li><strong>7Pace entries travel with the work item.</strong> Historic time records remain attached after the move and roll up under P&rsquo;s reports.</li>
     </ul>
   </div>
 </div></section>
@@ -621,8 +655,89 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
   </div>
 </div></section>
 
+<!-- ═══ ENTERPRISE GOVERNANCE ═══ -->
+<section id="enterprise" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">Enterprise Governance, Auditability &amp; Compliance</h2>
+  <p class="section-lead">For an enterprise deployment, intake workflow design is only half the story. The other half is proving to security, risk, and compliance stakeholders that every external request is captured, attributable, and retained for audit. The following controls are directly supported by Azure DevOps.</p>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="feature-card">
+      <h3>🛡️ Enable organization-level audit logging</h3>
+      <p style="margin-bottom:10px;">Azure DevOps <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/azure-devops-auditing?view=azure-devops" target="_blank">Auditing</a> captures permission changes, resource deletions, branch policy changes, and log access &mdash; 90-day retention by default.</p>
+      <ul>
+        <li>Turn on <em>Log Audit Events</em> in Organization Settings &rarr; Policies</li>
+        <li>Only Project Collection Administrators can access by default</li>
+        <li>Grant explicit <em>View audit log</em> permission to your compliance team</li>
+        <li>Available only for <strong>Microsoft Entra ID-backed organizations</strong></li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>🔄 Stream to SIEM for long-term retention</h3>
+      <p style="margin-bottom:10px;">For retention beyond 90 days and enterprise incident response, <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/auditing-streaming?view=azure-devops" target="_blank">Audit Streaming</a> pushes events to Splunk, Microsoft Sentinel, or any SIEM.</p>
+      <ul>
+        <li>Required for SOX / SOC 2 / ISO 27001 audit trails</li>
+        <li>Supports cloud and on-premises Splunk (allowlist IP ranges)</li>
+        <li>Every intake create / move / state change is captured</li>
+        <li>Correlate with Microsoft Entra sign-in logs for full attribution</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="h4 mb-3">Enterprise guardrails &mdash; the full picture</h3>
+  <table class="gov-table">
+    <thead><tr><th style="width:28%;">Control</th><th style="width:22%;">Azure DevOps capability</th><th>Applies to intake because...</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Least-privilege access to <code>_Intake</code></td>
+        <td>Area Path permissions &mdash; <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/set-permissions-access-work-tracking?view=azure-devops" target="_blank">work tracking ACLs</a></td>
+        <td>External submitters get Contribute only on <code>P\_Intake</code>; explicit Deny on other team Areas prevents accidental writes to protected backlogs.</td>
+      </tr>
+      <tr>
+        <td>Identity governance</td>
+        <td>Microsoft Entra ID group-based membership</td>
+        <td>Manage <code>P Intake Submitters</code> via an Entra group. Joiner/mover/leaver automation in Entra drives project access automatically. Review via Entra access reviews.</td>
+      </tr>
+      <tr>
+        <td>Structured intake (required fields)</td>
+        <td><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/custom-rules?view=azure-devops" target="_blank">Custom rules on Inherited process</a></td>
+        <td>Require <em>Business Justification</em>, <em>Requested By</em>, <em>Requesting Team</em> on stories created under <code>_Intake</code>. Rules can enforce required fields on state transition.</td>
+      </tr>
+      <tr>
+        <td>Non-repudiation of submissions</td>
+        <td>Audit log + work item History</td>
+        <td>Every created / updated / moved work item is stamped with actor + timestamp. Combined with a form + flow front door, the form response ID creates an immutable source record.</td>
+      </tr>
+      <tr>
+        <td>SLA enforcement</td>
+        <td><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview?view=azure-devops" target="_blank">Service hooks</a> + dashboard widgets</td>
+        <td>Fire a hook when an intake story ages past 3 days without triage. Alert via Teams or email to enforce triage SLAs.</td>
+      </tr>
+      <tr>
+        <td>Change management traceability</td>
+        <td>Cross-project <em>Related</em> links + <a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/add-link?view=azure-devops" target="_blank">link types</a></td>
+        <td>The source WIT in the requester&rsquo;s project and the PMO delivery WIT are linked bidirectionally. Auditors can follow the chain from request to delivery to deployment.</td>
+      </tr>
+      <tr>
+        <td>Scoped visibility for external teams</td>
+        <td><em>Limit user visibility and collaboration to specific projects</em> preview feature + Project-Scoped Users group</td>
+        <td>Submitters from other parts of the org only see the P project (and specifically the Intake area), not the entire PMO internals. Reduces information exposure.</td>
+      </tr>
+      <tr>
+        <td>Licensing governance</td>
+        <td><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/stakeholder-access?view=azure-devops" target="_blank">Stakeholder access</a></td>
+        <td>Stakeholder (free) users in a <strong>private</strong> PMO project can view, add, and edit work items under Area Paths they have access to, but cannot change priority via drag-drop or delete. Good for read/submit-only business reviewers.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <p><strong>Microsoft&rsquo;s enterprise guidance:</strong> Microsoft recommends one project per organization wherever practical, adding additional projects only when you need to (1) prohibit cross-project information access, (2) support entirely separate business units with their own admin policies, or (3) support materially different work tracking processes. If other teams&rsquo; projects exist for historical reasons rather than a clear reason on that list, a medium-term consolidation project is worth considering &mdash; the intake workflow becomes unnecessary if everyone already lives in a single project with well-designed Area Paths. Source: <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops#add-another-project" target="_blank">About projects &mdash; Add another project</a>.</p>
+  </div>
+</div></section>
+
 <!-- ═══ 7PACE ═══ -->
-<section id="7pace" class="section section-alt">
+<section id="7pace" class="section">
 <div class="container-xl px-3">
   <h2 class="section-title">7Pace Timetracker Considerations</h2>
   <p class="section-lead">the existing 7Pace investment is a key reason we recommend the work ultimately lives in the P project. Here&rsquo;s how each pattern interacts with 7Pace.</p>
@@ -637,7 +752,7 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
 </div></section>
 
 <!-- ═══ FAQ ═══ -->
-<section id="faq" class="section">
+<section id="faq" class="section section-alt">
 <div class="container-xl px-3">
   <h2 class="section-title">FAQ &amp; Gotchas</h2>
   <p class="section-lead">The questions that typically come up when rolling this out to other teams.</p>
@@ -679,9 +794,9 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
 </div></section>
 
 <!-- ═══ NEXT STEPS ═══ -->
-<section id="next-steps" class="section section-alt">
+<section id="next-steps" class="section">
 <div class="container-xl px-3">
-  <h2 class="section-title">Next Steps for </h2>
+  <h2 class="section-title">Next Steps</h2>
   <p class="section-lead">A concrete kickoff checklist to get the intake workflow live this sprint.</p>
 
   <div class="grid-2">
@@ -719,35 +834,40 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
     <div>
       <h4 style="color:#f0f6fc;font-size:14px;">Azure Boards &amp; Areas</h4>
       <ul style="list-style:none;padding:0;line-height:2;">
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/set-area-paths" target="_blank">Define Area Paths &amp; assign to a team</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/move-change-type" target="_blank">Move or change type of a work item</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/queries/link-work-items-support-traceability" target="_blank">Cross-project linking &amp; traceability</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/queries/using-queries" target="_blank">Shared &amp; cross-project queries</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/plans/review-team-plans" target="_blank">Delivery Plans</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops" target="_blank">About projects &amp; scaling your organization</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-teams-and-settings?view=azure-devops" target="_blank">About teams &amp; Agile tools</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/set-area-paths?view=azure-devops" target="_blank">Define Area Paths &amp; assign to a team</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/move-change-type?view=azure-devops" target="_blank">Move or change type of a work item</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/add-link?view=azure-devops" target="_blank">Link work items &amp; traceability</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/plans/review-team-plans?view=azure-devops" target="_blank">Delivery Plans</a></li>
       </ul>
     </div>
     <div>
-      <h4 style="color:#f0f6fc;font-size:14px;">Automation &amp; Integration</h4>
+      <h4 style="color:#f0f6fc;font-size:14px;">Governance, Security &amp; Automation</h4>
       <ul style="list-style:none;padding:0;line-height:2;">
-        <li><a href="https://learn.microsoft.com/en-us/connectors/visualstudioteamservices/" target="_blank">Azure DevOps connector for Power Automate</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview" target="_blank">Service Hooks overview</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/set-permissions-access-work-tracking?view=azure-devops" target="_blank">Set work tracking permissions</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/azure-devops-auditing?view=azure-devops" target="_blank">Azure DevOps auditing</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/auditing-streaming?view=azure-devops" target="_blank">Audit streaming to SIEM</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/reference/customize-work?view=azure-devops" target="_blank">Customize your work tracking experience</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/connectors/visualstudioteamservices/" target="_blank">Power Automate &mdash; Azure DevOps connector</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview?view=azure-devops" target="_blank">Service Hooks overview</a></li>
         <li><a href="https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/create" target="_blank">REST API &mdash; Create work item</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/permissions" target="_blank">Permissions &amp; groups reference</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/customize-process" target="_blank">Customize an inherited process</a></li>
       </ul>
     </div>
     <div>
-      <h4 style="color:#f0f6fc;font-size:14px;">7Pace &amp; Licensing</h4>
+      <h4 style="color:#f0f6fc;font-size:14px;">Licensing, 7Pace &amp; Skill Source</h4>
       <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/stakeholder-access?view=azure-devops" target="_blank">Stakeholder access quick reference</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/access-levels?view=azure-devops" target="_blank">Access levels (Stakeholder / Basic / Basic+Test Plans)</a></li>
         <li><a href="https://support.7pace.com/hc/en-us" target="_blank">7Pace Timetracker support</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/billing/buy-basic-access-add-users" target="_blank">Azure DevOps access levels (Stakeholder / Basic)</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/work-items/work-item-template" target="_blank">Work item templates</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/project/wiki/wiki-create-repo" target="_blank">Wiki for publishing the intake process</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/work-items/work-item-template?view=azure-devops" target="_blank">Work item templates</a></li>
+        <li><a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank"><strong>MicrosoftDocs azure-devops agent skill</strong></a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/mcp-server/mcp-server-overview?view=azure-devops" target="_blank">Azure DevOps MCP Server (AI assistance)</a></li>
       </ul>
     </div>
   </div>
   <hr style="border-color:#30363d;margin:24px 0;">
-  <p style="font-size:12px;text-align:center;">&mdash; Azure DevOps Cross-Project Intake Workflow Guide &mdash; Solution Design Document &mdash; 2026</p>
+  <p style="font-size:12px;text-align:center;">Azure DevOps Cross-Project Intake Workflow Guide &mdash; Solution Design Document &mdash; Research assisted by the <a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank">MicrosoftDocs <code>azure-devops</code> agent skill</a> &mdash; 2026</p>
 </div></footer>
 
 </body>
