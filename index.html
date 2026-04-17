@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="light" data-light-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>&mdash; Azure DevOps Cross-Project Intake Workflow Guide</title>
+  <link href="https://unpkg.com/@primer/css@21/dist/primer.css" rel="stylesheet" />
+  <style>
+    :root {
+      --brand-azure: #0078d4;
+      --brand-azure-dark: #005a9e;
+      --brand-azure-light: #50a6e8;
+      --brand-boards: #f2b705;
+      --brand-success: #2da44e;
+      --brand-success-dark: #1a7f37;
+      --brand-warning: #9a6700;
+      --brand-danger: #cf222e;
+      --brand-purple: #6e40c9;
+      --brand-purple-dark: #553098;
+      --hero-gradient: linear-gradient(135deg, #0d1117 0%, #0a2540 40%, #1c3d6a 100%);
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif; margin: 0; scroll-behavior: smooth; }
+    .hero { background: var(--hero-gradient); color: #f0f6fc; padding: 80px 0 64px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(0,120,212,0.22) 0%, transparent 70%); border-radius: 50%; }
+    .hero h1 { font-size: 42px; font-weight: 800; line-height: 1.1; max-width: 960px; position: relative; }
+    .hero h1 .highlight { color: var(--brand-azure-light); }
+    .hero h1 .highlight-boards { color: var(--brand-boards); }
+    .hero .subtitle { font-size: 18px; color: #8b949e; max-width: 860px; margin-top: 16px; line-height: 1.6; }
+    .hero .badge-row { margin-top: 24px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .section { padding: 48px 0; }
+    .section-alt { background-color: #f6f8fa; }
+    .section-title { font-size: 30px; font-weight: 700; margin-bottom: 8px; }
+    .section-lead { font-size: 17px; color: #656d76; margin-bottom: 32px; max-width: 860px; line-height: 1.6; }
+    .feature-card { border: 1px solid #d0d7de; border-radius: 12px; padding: 24px; height: 100%; transition: box-shadow 0.2s; background: #fff; }
+    .feature-card:hover { border-color: var(--brand-azure); box-shadow: 0 4px 12px rgba(0,120,212,0.12); }
+    .feature-card h3 { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+    .feature-card p { font-size: 14px; color: #656d76; line-height: 1.5; }
+    .feature-card ul { font-size: 14px; color: #656d76; line-height: 1.8; padding-left: 18px; }
+    .code-block { background: #0d1117; border-radius: 8px; padding: 16px; overflow-x: auto; margin: 16px 0; }
+    .code-block code { color: #f0f6fc; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; line-height: 1.6; white-space: pre; }
+    .code-block .comment { color: #8b949e; }
+    .code-block .keyword { color: #ff7b72; }
+    .code-block .string { color: #a5d6ff; }
+    .code-block .function { color: #d2a8ff; }
+    .code-block .label { color: #7ee787; }
+    .callout { border-left: 4px solid var(--brand-azure); background: #ddf4ff; border-radius: 0 8px 8px 0; padding: 20px 24px; margin: 24px 0; }
+    .callout p { font-size: 15px; line-height: 1.6; color: #24292f; margin: 0; }
+    .callout strong { color: var(--brand-azure-dark); }
+    .callout-warn { border-left-color: var(--brand-warning); background: #fff8c5; }
+    .callout-warn strong { color: var(--brand-warning); }
+    .callout-danger { border-left-color: var(--brand-danger); background: #ffebe9; }
+    .callout-danger strong { color: var(--brand-danger); }
+    .callout-success { border-left-color: var(--brand-success); background: #dafbe1; }
+    .callout-success strong { color: var(--brand-success-dark); }
+    .callout-purple { border-left-color: var(--brand-purple); background: #f5f0ff; }
+    .callout-purple strong { color: var(--brand-purple-dark); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } .hero h1 { font-size: 28px; } }
+    .top-nav { background: #0d1117; border-bottom: 1px solid #30363d; padding: 12px 0; position: sticky; top: 0; z-index: 100; }
+    .top-nav a { color: #f0f6fc; text-decoration: none; font-size: 13px; font-weight: 500; padding: 6px 10px; border-radius: 6px; }
+    .top-nav a:hover { background: #21262d; }
+    .nav-inner { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .nav-logo { font-weight: 700; font-size: 15px; margin-right: 12px; color: #f0f6fc; }
+    .footer { background: #0d1117; color: #8b949e; padding: 40px 0; }
+    .footer a { color: var(--brand-azure-light); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+    table.gov-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; background: #fff; }
+    table.gov-table th { background: #f6f8fa; border-bottom: 2px solid #d0d7de; padding: 12px; text-align: left; font-weight: 600; }
+    table.gov-table td { padding: 12px; border-bottom: 1px solid #d0d7de; color: #24292f; vertical-align: top; }
+    table.gov-table tr:hover { background: #f6f8fa; }
+    table.gov-table code { background: #eff1f3; padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #24292f; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li { padding: 8px 0 8px 28px; position: relative; font-size: 14px; line-height: 1.6; color: #24292f; }
+    .checklist li::before { content: '☐'; position: absolute; left: 0; color: var(--brand-azure); font-size: 16px; }
+    .step-number { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--brand-azure); color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+    .workflow-step { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
+    .workflow-step .step-content h4 { margin: 4px 0 6px; font-size: 16px; }
+    .workflow-step .step-content p { font-size: 14px; color: #656d76; line-height: 1.5; margin: 0; }
+    .pattern-card { border: 1px solid #d0d7de; border-radius: 12px; padding: 28px; background: #fff; margin-bottom: 24px; }
+    .pattern-card.recommended { border: 2px solid var(--brand-success); background: linear-gradient(180deg, #f0fdf4 0%, #fff 40%); }
+    .pattern-card h3 { font-size: 20px; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+    .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pill-success { background: #2da44e; color: #fff; }
+    .pill-azure { background: #0078d4; color: #fff; }
+    .pill-warn { background: #fff8c5; color: var(--brand-warning); }
+    .pill-gray { background: #eaeef2; color: #656d76; }
+    .ascii-diagram { background: #0d1117; color: #f0f6fc; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; line-height: 1.5; padding: 20px; border-radius: 8px; white-space: pre; overflow-x: auto; margin: 16px 0; }
+    .ascii-diagram .accent-azure { color: #79c0ff; }
+    .ascii-diagram .accent-green { color: #7ee787; }
+    .ascii-diagram .accent-gold { color: #f2cc60; }
+    .ascii-diagram .accent-mute { color: #8b949e; }
+    .kv-list { list-style: none; padding: 0; margin: 0; }
+    .kv-list li { padding: 10px 0; border-bottom: 1px solid #eaeef2; display: flex; gap: 12px; font-size: 14px; }
+    .kv-list li:last-child { border-bottom: 0; }
+    .kv-list .kv-key { font-weight: 600; color: #24292f; min-width: 180px; }
+    .kv-list .kv-val { color: #656d76; flex: 1; }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="top-nav"><div class="container-xl px-3"><div class="nav-inner">
+  <span class="nav-logo">🔷 &middot; ADO Cross-Project Intake</span>
+  <a href="#problem">Problem</a>
+  <a href="#constraints">Constraints</a>
+  <a href="#recommendation">Recommendation</a>
+  <a href="#pattern-1">Pattern 1: Intake Area</a>
+  <a href="#pattern-2">Pattern 2: Form + Flow</a>
+  <a href="#pattern-3">Pattern 3: Native Move</a>
+  <a href="#comparison">Compare</a>
+  <a href="#implementation">Implementation</a>
+  <a href="#permissions">Permissions</a>
+  <a href="#7pace">7Pace</a>
+  <a href="#faq">FAQ</a>
+</div></div></nav>
+
+<!-- Hero -->
+<section class="hero"><div class="container-xl px-3">
+  <p style="font-size:13px; text-transform:uppercase; letter-spacing:2px; color:#8b949e; margin-bottom:12px; font-weight:600;">Solution Design Guide &mdash; 2026</p>
+  <h1>Cross-Project Work Intake in <span class="highlight">Azure DevOps</span> &mdash; A Workflow for <span class="highlight-boards">the P Project</span></h1>
+  <p class="subtitle">A practical blueprint for letting IT teams and business teams in <em>other</em> Azure DevOps Projects submit User Stories into your P team Areas so you can triage, allocate, and deliver work &mdash; while preserving 7Pace time tracking and full auditability. Built around three proven patterns and a native Azure DevOps feature set.</p>
+  <div class="badge-row">
+    <span class="Label" style="background:#ddf4ff;color:#0078d4;">Azure Boards</span>
+    <span class="Label" style="background:#fff8c5;color:#9a6700;">Inherited Process</span>
+    <span class="Label Label--success">7Pace Compatible</span>
+    <span class="Label" style="background:#f5f0ff;color:#6e40c9;">Power Automate</span>
+    <span class="Label">Cross-Project</span>
+    <span class="Label">Intake Workflow</span>
+  </div>
+</div></section>
+
+<!-- ═══ PROBLEM ═══ -->
+<section id="problem" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">The Problem We&rsquo;re Solving</h2>
+  <p class="section-lead">the P Project already has a healthy model for allocating work <em>inside</em> the P project: each IT team owns an Area Path, uses a team backlog, and cross-team work is handled by setting the User Story&rsquo;s Area Path to the receiving team. The friction appears at the project boundary.</p>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="feature-card">
+      <h3>✅ What works today</h3>
+      <ul>
+        <li>All P IT teams share one Project &mdash; clean backlogs via Area Path</li>
+        <li>Stories roll up to Features and Epics across teams</li>
+        <li>7Pace tracks time on any work item in the P project</li>
+        <li>Cross-team allocation = just switch the Area Path</li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>❌ Where it breaks</h3>
+      <ul>
+        <li>Other IT teams and business teams live in <em>different</em> ADO Projects</li>
+        <li>No way for them to pick an Area Path that lives in P</li>
+        <li>Work requests arrive via email, Teams, or tickets &mdash; not trackable</li>
+        <li>P loses visibility into upstream demand and can&rsquo;t roll it up to capacity plans</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Goal:</strong> Give any team in the Azure DevOps organization &mdash; regardless of which Project they live in &mdash; a simple, governed path to submit a User Story that ends up in the correct P team Area, with the originating team retaining visibility and 7Pace time tracking intact.</p>
+  </div>
+</div></section>
+
+<!-- ═══ CONSTRAINTS ═══ -->
+<section id="constraints" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">Azure DevOps Constraints You Need to Know</h2>
+  <p class="section-lead">Before we pick a pattern, it helps to be explicit about what Azure DevOps does and does <em>not</em> allow across Project boundaries. This is the reason the answer isn&rsquo;t obvious &mdash; the platform enforces a hard line at the Project.</p>
+
+  <table class="gov-table">
+    <thead><tr><th style="width:34%;">Capability</th><th style="width:18%;">Within a Project</th><th style="width:18%;">Across Projects (same Org)</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Assign a work item to an Area Path</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td><span class="pill pill-gray">No</span></td>
+        <td>Area Paths are scoped to their owning Project. A User Story cannot point at an Area Path in another Project.</td>
+      </tr>
+      <tr>
+        <td>Link work items (Related / Parent / Child / Predecessor)</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td>Cross-project links are fully supported inside the same organization.</td>
+      </tr>
+      <tr>
+        <td>Cross-project queries</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td>Flat and directed-link queries can span multiple projects in one org.</td>
+      </tr>
+      <tr>
+        <td>Move a work item to another Project</td>
+        <td style="color:#656d76;">n/a</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td>Native feature. Preserves ID history, comments, attachments. Requires the source and target projects to use compatible processes and the user to have <em>Move work items out of this project</em> + <em>Edit work items in this node</em> on the target.</td>
+      </tr>
+      <tr>
+        <td>Add custom work item types / states</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td style="color:#656d76;">Per process</td>
+        <td>Only Inherited Processes in Azure DevOps Services. A process is shared by any project that uses it.</td>
+      </tr>
+      <tr>
+        <td>Service Hooks / Webhooks</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td>Per-project subscriptions; can fire on cross-project events.</td>
+      </tr>
+      <tr>
+        <td>Power Automate &mdash; Azure DevOps connector</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td>A single flow can read from Project A and create/update work items in Project B, setting Area Path at creation time.</td>
+      </tr>
+      <tr>
+        <td>7Pace Timetracker entries</td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td><span class="pill pill-success">Yes</span></td>
+        <td>Installed per Organization. Time entries live on the work item, so they follow the work item if it is moved between projects.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <p><strong>The core constraint to design around:</strong> An Area Path lives in exactly one Project. Anyone who needs to place a User Story into a P team&rsquo;s Area Path must &mdash; at some point in the flow &mdash; be acting inside the P project, either directly (as a contributor) or indirectly (via an automation that runs on their behalf).</p>
+  </div>
+</div></section>
+
+<!-- ═══ RECOMMENDATION ═══ -->
+<section id="recommendation" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">Recommended Solution</h2>
+  <p class="section-lead">We recommend a <strong>two-layer intake model</strong> that combines a dedicated intake area inside P with a lightweight automation front door for teams that shouldn&rsquo;t have direct P access. It works today, requires no custom code, and layers in optional enhancements as you grow.</p>
+
+  <div class="ascii-diagram"><span class="accent-mute">┌─────────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="accent-mute">│</span>                         <span class="accent-gold">AZURE DEVOPS ORGANIZATION</span>                          <span class="accent-mute">│</span>
+<span class="accent-mute">├─────────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="accent-mute">│</span>                                                                                 <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   <span class="accent-azure">Project: Business-Ops</span>           <span class="accent-azure">Project: IT-Other</span>          <span class="accent-green">Project: P</span>       <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   ┌──────────────────┐         ┌──────────────────┐      ┌──────────────────┐   <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   │ Business team    │         │ IT team (other)  │      │ P\_Intake      │   <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   │ backlog          │         │ backlog          │      │ (triage queue)   │   <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   └────────┬─────────┘         └────────┬─────────┘      └────────┬─────────┘   <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>            │ 1. Submit via Form/Flow    │ 1. Submit directly       │             <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>            ▼                            ▼                          │             <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   ┌─────────────────────────────────────────────────┐              │             <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   │ <span class="accent-gold">Power Automate Flow</span> &mdash; "Create P Intake Story"│              │             <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   │  - Sets Area Path = P\_Intake\&lt;target team&gt;    │──────────────┘             <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   │  - Adds "Related" link back to requester's WIT   │                            <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>   └─────────────────────────────────────────────────┘                            <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>                                                      │ 2. P triage              <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>                                                      ▼                            <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>                                          ┌──────────────────────┐                <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>                                          │ <span class="accent-green">P\TeamA, P\TeamB</span>  │  ← existing      <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>                                          │ team Areas (owners)  │    team        <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>                                          └──────────────────────┘    backlogs   <span class="accent-mute">│</span>
+<span class="accent-mute">│</span>                                                                                 <span class="accent-mute">│</span>
+<span class="accent-mute">└─────────────────────────────────────────────────────────────────────────────────┘</span></div>
+
+  <div class="grid-3" style="margin-top:24px;">
+    <div class="feature-card">
+      <h3>🟦 Layer 1 &mdash; Intake Area in P</h3>
+      <p>A dedicated <code>P\_Intake</code> Area Path with child nodes per receiving team. Every submitted story lands here first, regardless of source.</p>
+    </div>
+    <div class="feature-card">
+      <h3>🟨 Layer 2 &mdash; Form + Flow Front Door</h3>
+      <p>A Microsoft Form (or ADO work item template) feeding a Power Automate flow that creates the story in P with the right Area Path and a link back to the submitter.</p>
+    </div>
+    <div class="feature-card">
+      <h3>🟩 Layer 3 &mdash; Triage &amp; Allocation</h3>
+      <p>Existing P triage meeting re-parents stories from <code>_Intake</code> to the owning team&rsquo;s Area. Now your existing allocation model just works.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-success">
+    <p><strong>Why this works for :</strong> It respects the ADO Project boundary instead of fighting it. All P work &mdash; including externally-submitted work &mdash; ends up in the P project where your existing Area Path allocation model, 7Pace time tracking, Features, and Epics already operate. Submitters stay informed via the Related link back to their own project.</p>
+  </div>
+</div></section>
+
+<!-- ═══ PATTERN 1 ═══ -->
+<section id="pattern-1" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">Pattern 1 &mdash; Dedicated Intake Area in P</h2>
+  <p class="section-lead">The backbone of the solution. Works on day one with no automation. Other patterns build on top of this.</p>
+
+  <div class="pattern-card recommended">
+    <h3>🟢 Intake Area Path <span class="pill pill-success">Recommended Foundation</span></h3>
+    <p style="color:#656d76; font-size:15px; line-height:1.6;">Create a first-class &ldquo;front porch&rdquo; inside the P project. Everyone who needs to send work to P ends up here, and P controls what happens next.</p>
+
+    <h4 style="margin-top:24px;">Area Path structure</h4>
+    <div class="code-block"><code>P
+├── TeamA                    <span class="comment"># existing team Areas (unchanged)</span>
+├── TeamB
+├── TeamC
+└── _Intake                  <span class="comment"># NEW &mdash; note the leading underscore sorts it to the top</span>
+    ├── ForTeamA             <span class="comment"># optional: hint at target team</span>
+    ├── ForTeamB
+    ├── ForTeamC
+    └── Unassigned           <span class="comment"># default when submitter doesn't know who owns it</span></code></div>
+
+    <h4 style="margin-top:20px;">Ownership &amp; process</h4>
+    <ol style="font-size:14px; color:#24292f; line-height:1.8;">
+      <li><strong>P owns the <code>_Intake</code> area.</strong> It is not a team backlog &mdash; it is a triage queue.</li>
+      <li>Every story entering P from another project lands in <code>_Intake</code> with State = <em>New</em>.</li>
+      <li>P runs a short standing triage (daily or 2&times;/week). On accepting a story, the triage owner:
+        <ul>
+          <li>Re-parents the story&rsquo;s Area Path to the owning team, e.g. <code>P\TeamA</code></li>
+          <li>Sets State = <em>Active</em> (or whatever your team uses)</li>
+          <li>Parents the story to the relevant Feature / Epic</li>
+          <li>Leaves any pre-existing &ldquo;Related&rdquo; link back to the submitter in place</li>
+        </ul>
+      </li>
+      <li>From that point, it is a normal P story. 7Pace, rollup, sprint planning &mdash; unchanged.</li>
+    </ol>
+
+    <h4 style="margin-top:20px;">What the intake queue looks like</h4>
+    <p style="font-size:14px; color:#656d76;">A saved shared query in the P project is the easiest triage view. Pin it to the P project dashboard.</p>
+    <div class="code-block"><code><span class="comment">-- Shared Query: "P Intake Queue"</span>
+<span class="keyword">SELECT</span> [Id], [Work Item Type], [Title], [State], [Created By],
+       [Created Date], [Tags], [Area Path]
+<span class="keyword">FROM</span> workitems
+<span class="keyword">WHERE</span> [Team Project] = <span class="string">'P'</span>
+  <span class="keyword">AND</span> [Area Path] <span class="keyword">UNDER</span> <span class="string">'P\_Intake'</span>
+  <span class="keyword">AND</span> [State] <span class="keyword">IN</span> (<span class="string">'New'</span>, <span class="string">'Proposed'</span>)
+<span class="keyword">ORDER BY</span> [Created Date] <span class="keyword">ASC</span></code></div>
+  </div>
+</div></section>
+
+<!-- ═══ PATTERN 2 ═══ -->
+<section id="pattern-2" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">Pattern 2 &mdash; Power Automate &ldquo;Front Door&rdquo;</h2>
+  <p class="section-lead">This is how submitters in <em>other</em> Azure DevOps projects (or business teams with limited ADO access) get their story into P without needing to know your Area Path taxonomy. Zero code &mdash; a Power Automate flow does the crossing for them.</p>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="feature-card">
+      <h3>Option A &mdash; Trigger from ADO</h3>
+      <p style="margin-bottom:12px;">Submitter creates a User Story in <em>their own</em> project with a specific tag (e.g. <code>send-to-p</code>) or custom field. A flow watches for new work items with that tag and creates a mirror in P.</p>
+      <ul>
+        <li>Best when submitters already live in ADO</li>
+        <li>Keeps a copy in the submitter&rsquo;s own project for their visibility</li>
+        <li>Creates a Related link automatically between the two IDs</li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>Option B &mdash; Trigger from a Form</h3>
+      <p style="margin-bottom:12px;">Submitter fills out a Microsoft Form (or a Power Apps canvas). Flow creates the User Story directly in P with the correct Area Path and notifies the submitter via email / Teams.</p>
+      <ul>
+        <li>Best for business teams and ad-hoc requesters</li>
+        <li>No ADO license required for the submitter (Stakeholder license OK to view later)</li>
+        <li>Captures structured fields (priority, target team, justification)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="h4 mb-3">Flow: &ldquo;Create P Intake Story&rdquo; (Option A example)</h3>
+
+  <div class="workflow-step">
+    <span class="step-number">1</span>
+    <div class="step-content">
+      <h4>Trigger</h4>
+      <p><strong>When a work item is created</strong> &mdash; Organization = <code>contoso</code>, Project = <code>Business-Ops</code>, Work Item Type = <code>User Story</code>.</p>
+    </div>
+  </div>
+  <div class="workflow-step">
+    <span class="step-number">2</span>
+    <div class="step-content">
+      <h4>Condition</h4>
+      <p>Only continue if <code>Tags</code> contains <code>send-to-p</code>. This keeps the flow opt-in and avoids runaway duplication.</p>
+    </div>
+  </div>
+  <div class="workflow-step">
+    <span class="step-number">3</span>
+    <div class="step-content">
+      <h4>Resolve target Area Path</h4>
+      <p>Read a custom field (<code>Custom.TargetPTeam</code>) or parse tags like <code>p-team:TeamA</code>. Build the Area Path expression: <code>P\_Intake\ForTeamA</code>.</p>
+    </div>
+  </div>
+  <div class="workflow-step">
+    <span class="step-number">4</span>
+    <div class="step-content">
+      <h4>Create a work item in P</h4>
+      <p><strong>Action:</strong> Azure DevOps &mdash; <em>Create a work item</em>. Organization = <code>contoso</code>, Project = <code>P</code>, Type = <code>User Story</code>, Title = source title, Description = source description + &ldquo;Submitted from [link to source WIT]&rdquo;, Area Path = resolved value, Iteration Path = <code>P</code>, Tags = <code>intake; from-business-ops</code>.</p>
+    </div>
+  </div>
+  <div class="workflow-step">
+    <span class="step-number">5</span>
+    <div class="step-content">
+      <h4>Link the two work items</h4>
+      <p><strong>Action:</strong> Azure DevOps &mdash; <em>Add a link</em>. Link the source WIT to the new P WIT with relationship type <code>System.LinkTypes.Related</code>. The submitter keeps visibility in their project; the P WIT is the system of record for delivery.</p>
+    </div>
+  </div>
+  <div class="workflow-step">
+    <span class="step-number">6</span>
+    <div class="step-content">
+      <h4>Notify &amp; close the loop</h4>
+      <p>Post an adaptive card to a Teams channel, email the submitter with the P WIT ID, and (optionally) add a comment on the source WIT: &ldquo;Intake created: P #12345.&rdquo;</p>
+    </div>
+  </div>
+
+  <h3 class="h4 mt-4 mb-3">REST API payload (if you ever want to replace Power Automate with code)</h3>
+  <div class="code-block"><code><span class="comment"># POST to create a User Story in P with the _Intake Area Path</span>
+POST https://dev.azure.com/contoso/P/_apis/wit/workitems/$User%20Story?api-version=7.1
+
+Content-Type: application/json-patch+json
+Authorization: Bearer &lt;PAT or OAuth token&gt;
+
+[
+  { <span class="label">"op"</span>: <span class="string">"add"</span>, <span class="label">"path"</span>: <span class="string">"/fields/System.Title"</span>,
+    <span class="label">"value"</span>: <span class="string">"[Intake] Add SSO for claims portal"</span> },
+  { <span class="label">"op"</span>: <span class="string">"add"</span>, <span class="label">"path"</span>: <span class="string">"/fields/System.AreaPath"</span>,
+    <span class="label">"value"</span>: <span class="string">"P\\_Intake\\ForTeamA"</span> },
+  { <span class="label">"op"</span>: <span class="string">"add"</span>, <span class="label">"path"</span>: <span class="string">"/fields/System.IterationPath"</span>,
+    <span class="label">"value"</span>: <span class="string">"P"</span> },
+  { <span class="label">"op"</span>: <span class="string">"add"</span>, <span class="label">"path"</span>: <span class="string">"/fields/System.Tags"</span>,
+    <span class="label">"value"</span>: <span class="string">"intake; from-business-ops"</span> },
+  { <span class="label">"op"</span>: <span class="string">"add"</span>, <span class="label">"path"</span>: <span class="string">"/fields/System.Description"</span>,
+    <span class="label">"value"</span>: <span class="string">"Submitted from Business-Ops #4472 ..."</span> },
+  { <span class="label">"op"</span>: <span class="string">"add"</span>, <span class="label">"path"</span>: <span class="string">"/relations/-"</span>,
+    <span class="label">"value"</span>: {
+       <span class="label">"rel"</span>: <span class="string">"System.LinkTypes.Related"</span>,
+       <span class="label">"url"</span>: <span class="string">"https://dev.azure.com/contoso/_apis/wit/workItems/4472"</span>,
+       <span class="label">"attributes"</span>: { <span class="label">"comment"</span>: <span class="string">"Origin intake request"</span> }
+    }}
+]</code></div>
+
+  <div class="callout callout-purple">
+    <p><strong>No custom dev needed.</strong> The Power Automate connector covers all of this out of the box &mdash; create work item, update work item, add link, get work item details, get query results. Use the REST payload only if you want to embed intake into an internal portal or a bot.</p>
+  </div>
+</div></section>
+
+<!-- ═══ PATTERN 3 ═══ -->
+<section id="pattern-3" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">Pattern 3 &mdash; Native &ldquo;Move to P&rdquo; (Lightweight Alternative)</h2>
+  <p class="section-lead">If you don&rsquo;t want Power Automate yet, Azure DevOps has a native feature that can carry you a long way: <strong>Move work item to another project</strong>. This is the simplest possible workflow and worth understanding as a fallback.</p>
+
+  <div class="pattern-card">
+    <h3>How it works</h3>
+    <ol style="font-size:14px; color:#24292f; line-height:1.8;">
+      <li>Submitter creates a User Story in their own project like usual.</li>
+      <li>They (or a P delegate with permissions on both sides) open the work item, click the &hellip; menu, and choose <strong>Move to team project</strong>.</li>
+      <li>Select target project = <code>P</code>. Set Area Path = <code>P\_Intake</code>. Confirm.</li>
+      <li>The work item is now a P work item, retains its comments, history, and attachments, and the old ID redirects to the new one.</li>
+      <li>P triage proceeds as in Pattern 1.</li>
+    </ol>
+
+    <h4 style="margin-top:20px;">When to choose this</h4>
+    <ul style="font-size:14px; color:#656d76; line-height:1.8;">
+      <li>You want zero automation and are willing to ask a P admin to click a button for each intake.</li>
+      <li>Volume is low (&lt; 5 intakes per week).</li>
+      <li>Submitters understand they are <em>handing off</em> the story (they won&rsquo;t see it in their own project&rsquo;s backlog anymore unless you also create a Related link back).</li>
+    </ul>
+
+    <h4 style="margin-top:20px;">Watch-outs</h4>
+    <ul style="font-size:14px; color:#656d76; line-height:1.8;">
+      <li>Move requires the source and target projects to use <em>compatible</em> inherited processes. Custom fields that don&rsquo;t exist in P&rsquo;s process will be stripped.</li>
+      <li>The mover needs &ldquo;Move work items out of this project&rdquo; on the source and &ldquo;Edit work items in this node&rdquo; on <code>P\_Intake</code>.</li>
+      <li>After move, the original ID still resolves (via URL redirect) but does not appear in the source team&rsquo;s backlog. If submitters expect to keep visibility, add a <em>Related</em> link pointing back to a tracking WIT in their project.</li>
+      <li>7Pace time entries follow the work item across the move.</li>
+    </ul>
+  </div>
+</div></section>
+
+<!-- ═══ COMPARISON ═══ -->
+<section id="comparison" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">Pattern Comparison</h2>
+  <p class="section-lead">Pick one starting point. You can combine them later &mdash; the patterns are additive.</p>
+
+  <table class="gov-table">
+    <thead>
+      <tr>
+        <th style="width:22%;">Dimension</th>
+        <th>Pattern 1 &mdash; Intake Area</th>
+        <th>Pattern 2 &mdash; Form + Flow</th>
+        <th>Pattern 3 &mdash; Native Move</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Setup effort</td><td>Low (ADO config only)</td><td>Medium (form + flow)</td><td>Very low (nothing new)</td></tr>
+      <tr><td>Submitter experience</td><td>Must have Contributor on P</td><td>Form or own project &mdash; no P access needed</td><td>Submitter works in own project, then asks for move</td></tr>
+      <tr><td>Submitter keeps visibility</td><td>Only via cross-project query</td><td>Yes &mdash; Related link created automatically</td><td>Only if you manually add a Related link back</td></tr>
+      <tr><td>Business users (no ADO license)</td><td>Not ideal</td><td>Best fit (Form front door)</td><td>Not viable without license</td></tr>
+      <tr><td>Governance &amp; auditability</td><td>Good (triage in one queue)</td><td>Best (structured fields + flow history)</td><td>Fair (manual steps, no enforced fields)</td></tr>
+      <tr><td>Scales to &gt; 50 intakes / week</td><td>Yes</td><td>Yes</td><td>Painful &mdash; manual step per item</td></tr>
+      <tr><td>7Pace-compatible</td><td>Yes</td><td>Yes</td><td>Yes (entries follow the move)</td></tr>
+      <tr><td>Power Automate required</td><td>No</td><td>Yes</td><td>No</td></tr>
+      <tr><td>Recommended role</td><td>Foundation</td><td>Front door for external teams</td><td>Fallback / low-volume</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-success">
+    <p><strong>Our recommendation for :</strong> Ship <em>Pattern 1</em> in week one. Add <em>Pattern 2 (Option B &mdash; Form)</em> in weeks 2&ndash;3 for business teams that shouldn&rsquo;t have direct ADO access. Keep <em>Pattern 3</em> in your back pocket for one-off moves where neither flow applies.</p>
+  </div>
+</div></section>
+
+<!-- ═══ IMPLEMENTATION ═══ -->
+<section id="implementation" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">Implementation &mdash; Week-By-Week Plan</h2>
+  <p class="section-lead">A pragmatic rollout that delivers value on day one and layers in automation and governance as the volume grows.</p>
+
+  <h3 class="h4 mb-3">Week 1 &mdash; Foundation (Pattern 1)</h3>
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="feature-card">
+      <h3>🔧 Configuration</h3>
+      <ul class="checklist">
+        <li>Create Area Path <code>P\_Intake</code> with child nodes per P team</li>
+        <li>Add a default child node <code>P\_Intake\Unassigned</code></li>
+        <li>Configure the <em>P Intake Triage</em> team (or reuse P default team) with <code>P\_Intake</code> as its default Area Path</li>
+        <li>Create a shared query: <code>P Intake Queue</code> (see Pattern 1)</li>
+        <li>Pin the query to the P project dashboard</li>
+        <li>Add a work item template named <em>&ldquo;Intake &mdash; User Story&rdquo;</em> that pre-fills Area Path and a description template</li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>👥 Access &amp; Process</h3>
+      <ul class="checklist">
+        <li>Add members of other IT team projects to a new Azure DevOps security group: <code>P Intake Submitters</code></li>
+        <li>Grant that group <em>Contribute</em> on <code>P\_Intake</code> only &mdash; deny on other Area Paths</li>
+        <li>Deny <em>Delete work items in this node</em> to keep the intake record intact</li>
+        <li>Publish a one-page Wiki page: &ldquo;How to submit work to P&rdquo; with screenshots</li>
+        <li>Schedule a 15-minute daily P triage (or 2&times; per week to start)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="h4 mb-3">Week 2&ndash;3 &mdash; Front Door (Pattern 2)</h3>
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="feature-card">
+      <h3>📝 Microsoft Form</h3>
+      <ul class="checklist">
+        <li>Create form <em>P Work Intake Request</em> in Forms or SharePoint</li>
+        <li>Required fields: Title, Business justification, Target P team (dropdown), Requested by, Desired date, Priority</li>
+        <li>Share the form link in Teams / intranet</li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>⚡ Power Automate Flow</h3>
+      <ul class="checklist">
+        <li>Trigger: <em>When a new response is submitted</em></li>
+        <li>Action: <em>Azure DevOps &mdash; Create a work item</em> in <code>P</code>, Type = User Story, Area Path mapped from form answer</li>
+        <li>Action: <em>Add a comment</em> with submitter email + form response link</li>
+        <li>Action: <em>Send an email</em> to submitter with the new P work item URL</li>
+        <li>Action (optional): <em>Post adaptive card</em> to P Triage Teams channel</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="h4 mb-3">Week 4+ &mdash; Governance &amp; Insights</h3>
+  <div class="grid-3">
+    <div class="feature-card">
+      <h3>📊 Visibility</h3>
+      <ul>
+        <li>Build a <em>Delivery Plan</em> in ADO showing all P teams plus an Intake swim lane</li>
+        <li>Add a dashboard widget: Intake aging (stories &gt; 7 days in <code>_Intake</code>)</li>
+        <li>Add chart: intakes per source project / per target team</li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>🛡️ Guardrails</h3>
+      <ul>
+        <li>Add an ADO rule: when State moves out of <em>New</em>, require Area Path to no longer be under <code>_Intake</code></li>
+        <li>Add a rule: intake stories require a &ldquo;Business Value&rdquo; or &ldquo;Requested By&rdquo; field</li>
+        <li>Service hook to alert if an intake is older than SLA (e.g. 3 days untriaged)</li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>🧭 Process customization</h3>
+      <ul>
+        <li>If volume warrants it, add a custom WIT <em>Intake Request</em> to your inherited process</li>
+        <li>States: <em>New &rarr; Triage &rarr; Accepted &rarr; Rejected</em></li>
+        <li>On Accepted, flow auto-spawns the real User Story and links it</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<!-- ═══ PERMISSIONS ═══ -->
+<section id="permissions" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">Permissions Matrix</h2>
+  <p class="section-lead">Getting the permissions right is what makes this feel seamless to submitters. Grant the minimum necessary and let the Area Path boundary do the enforcement.</p>
+
+  <table class="gov-table">
+    <thead><tr><th style="width:26%;">Actor</th><th style="width:22%;">ADO Group / Role</th><th>Scope &amp; Permissions</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Submitter in another ADO project (IT team)</td>
+        <td>Member of <code>P Intake Submitters</code> security group in P</td>
+        <td>Contribute on <code>P\_Intake</code> only. No access to other P team Areas. Can view the P project and read cross-project queries.</td>
+      </tr>
+      <tr>
+        <td>Submitter with no ADO license (business team)</td>
+        <td>No ADO membership required</td>
+        <td>Submits via Microsoft Form. The Power Automate flow runs under a dedicated service account that has contribute rights in P.</td>
+      </tr>
+      <tr>
+        <td>Power Automate service account</td>
+        <td>Member of P <em>Contributors</em></td>
+        <td>Contribute to all P Area Paths so it can write to any intake sub-area. Use a dedicated identity &mdash; not a person.</td>
+      </tr>
+      <tr>
+        <td>P Triage Owner</td>
+        <td>P <em>Project Administrators</em> or custom <em>P Triage</em> group</td>
+        <td>Edit / re-parent work items across all P Areas; manage shared queries; move work items out of other projects if using Pattern 3.</td>
+      </tr>
+      <tr>
+        <td>P Team Members (existing)</td>
+        <td>No change</td>
+        <td>Existing permissions on their own team Area remain as-is. They simply receive triaged stories that now exist in their Area.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <p><strong>License note:</strong> Users with a free <em>Stakeholder</em> license can view and comment on work items in a private project but cannot create or edit most fields. If business users will submit via ADO directly, they need at least a Basic license. The Microsoft Form + Power Automate path avoids this entirely because the service account writes on their behalf.</p>
+  </div>
+</div></section>
+
+<!-- ═══ 7PACE ═══ -->
+<section id="7pace" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">7Pace Timetracker Considerations</h2>
+  <p class="section-lead">the existing 7Pace investment is a key reason we recommend the work ultimately lives in the P project. Here&rsquo;s how each pattern interacts with 7Pace.</p>
+
+  <ul class="kv-list">
+    <li><span class="kv-key">Installation scope</span><span class="kv-val">7Pace Timetracker is installed at the <em>Organization</em> level. Time entries are always attached to a work item, not to a project directly.</span></li>
+    <li><span class="kv-key">Pattern 1 (Intake Area)</span><span class="kv-val">All time is logged against the P work item from the moment it exists. No change to reporting, timesheet, budgets, or approval workflows.</span></li>
+    <li><span class="kv-key">Pattern 2 (Form + Flow)</span><span class="kv-val">Same as Pattern 1 &mdash; the flow creates the work item directly in P. 7Pace picks it up automatically.</span></li>
+    <li><span class="kv-key">Pattern 3 (Native move)</span><span class="kv-val">Time entries travel with the work item when it is moved. Post-move, all further tracking continues normally. Historic entries stay attached and roll up under the new P project&rsquo;s reports.</span></li>
+    <li><span class="kv-key">Anti-pattern to avoid</span><span class="kv-val">Do <em>not</em> duplicate work items (one &ldquo;delivery&rdquo; story in P + one &ldquo;tracking&rdquo; story in the submitter project) for the same unit of work. Time will get logged against the wrong item and 7Pace reports will split. Use a single P work item with a <em>Related</em> link back to the requester for visibility.</span></li>
+  </ul>
+</div></section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">FAQ &amp; Gotchas</h2>
+  <p class="section-lead">The questions that typically come up when rolling this out to other teams.</p>
+
+  <div class="grid-2">
+    <div class="feature-card">
+      <h3>Can a work item have an Area Path from a different project?</h3>
+      <p>No. Area Paths are scoped to their owning project. The story must live in the project that owns the Area Path. This is the constraint that shapes the entire solution.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Can submitters see the P story in their own project&rsquo;s backlog?</h3>
+      <p>Not directly &mdash; it&rsquo;s a P work item. Use the Related link + a cross-project query saved in their project to give them a backlog view that includes their linked P stories.</p>
+    </div>
+    <div class="feature-card">
+      <h3>What if two business teams want to submit the same story?</h3>
+      <p>Merge them at triage. Keep one P story as the canonical item and add both source stories as Related links. This keeps 7Pace clean and avoids double-counting capacity.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Do we need to customize our process?</h3>
+      <p>Not to start. The whole recommendation works on the out-of-the-box inherited process. Process customization (custom WIT for <em>Intake Request</em>, custom fields) becomes worthwhile once volume is high and you want structured metrics.</p>
+    </div>
+    <div class="feature-card">
+      <h3>What about Epics and Features for intake work?</h3>
+      <p>Intake stories enter without a parent. At triage, parent them to an existing Feature (if the work is part of an in-flight initiative) or to an &ldquo;Unplanned / Intake&rdquo; Feature under each team so it rolls up correctly.</p>
+    </div>
+    <div class="feature-card">
+      <h3>How do we handle rejections?</h3>
+      <p>Close the P intake story with State = <em>Removed</em> and a reason in the comment. The Related link back to the submitter&rsquo;s work item makes the trail obvious. If using Pattern 2, the flow can optionally email the submitter with the rejection reason.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Can we automate the re-parent step?</h3>
+      <p>Yes &mdash; an ADO rule or a secondary Power Automate flow can move a story from <code>_Intake</code> to a team Area based on a field (e.g. <em>Assigned Team</em> dropdown). Start manual to learn the patterns, then automate the steady-state rules.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Does this work with ADO Server / on-premises?</h3>
+      <p>The Area Path / cross-project link / move features are identical. Power Automate cloud triggers won&rsquo;t reach on-prem; use Service Hooks or the REST API with a self-hosted runner instead.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ═══ NEXT STEPS ═══ -->
+<section id="next-steps" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">Next Steps for </h2>
+  <p class="section-lead">A concrete kickoff checklist to get the intake workflow live this sprint.</p>
+
+  <div class="grid-2">
+    <div class="feature-card">
+      <h3>📅 Sprint 1 (this week)</h3>
+      <ul class="checklist">
+        <li>Create <code>P\_Intake</code> and team sub-areas</li>
+        <li>Create <code>P Intake Submitters</code> security group &amp; assign</li>
+        <li>Publish the <em>How to submit work to P</em> Wiki page</li>
+        <li>Build &amp; pin the <em>P Intake Queue</em> shared query</li>
+        <li>Identify one pilot external team to onboard first</li>
+      </ul>
+    </div>
+    <div class="feature-card">
+      <h3>📅 Sprint 2 (2 weeks out)</h3>
+      <ul class="checklist">
+        <li>Stand up Microsoft Form + Power Automate flow</li>
+        <li>Provision a dedicated flow service account in P</li>
+        <li>Onboard business teams via the Form front door</li>
+        <li>Schedule the recurring P triage</li>
+        <li>Add Delivery Plan with intake swim lane</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:32px;">
+    <p><strong>What you&rsquo;ll tell other teams in one sentence:</strong> &ldquo;If you want work from P, create a User Story in <code>P\_Intake</code> (or submit the form) &mdash; we triage daily and your story will get picked up by the right team, and you&rsquo;ll see it linked back to your project.&rdquo;</p>
+  </div>
+</div></section>
+
+<!-- Footer -->
+<footer class="footer"><div class="container-xl px-3">
+  <h3 style="color:#f0f6fc;font-size:18px;margin-bottom:16px;">References &amp; Documentation</h3>
+  <div class="grid-3" style="font-size:13px;">
+    <div>
+      <h4 style="color:#f0f6fc;font-size:14px;">Azure Boards &amp; Areas</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/set-area-paths" target="_blank">Define Area Paths &amp; assign to a team</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/move-change-type" target="_blank">Move or change type of a work item</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/queries/link-work-items-support-traceability" target="_blank">Cross-project linking &amp; traceability</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/queries/using-queries" target="_blank">Shared &amp; cross-project queries</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/plans/review-team-plans" target="_blank">Delivery Plans</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 style="color:#f0f6fc;font-size:14px;">Automation &amp; Integration</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/connectors/visualstudioteamservices/" target="_blank">Azure DevOps connector for Power Automate</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview" target="_blank">Service Hooks overview</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/create" target="_blank">REST API &mdash; Create work item</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/permissions" target="_blank">Permissions &amp; groups reference</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/customize-process" target="_blank">Customize an inherited process</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 style="color:#f0f6fc;font-size:14px;">7Pace &amp; Licensing</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://support.7pace.com/hc/en-us" target="_blank">7Pace Timetracker support</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/billing/buy-basic-access-add-users" target="_blank">Azure DevOps access levels (Stakeholder / Basic)</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/work-items/work-item-template" target="_blank">Work item templates</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/project/wiki/wiki-create-repo" target="_blank">Wiki for publishing the intake process</a></li>
+      </ul>
+    </div>
+  </div>
+  <hr style="border-color:#30363d;margin:24px 0;">
+  <p style="font-size:12px;text-align:center;">&mdash; Azure DevOps Cross-Project Intake Workflow Guide &mdash; Solution Design Document &mdash; 2026</p>
+</div></footer>
+
+</body>
+</html>
