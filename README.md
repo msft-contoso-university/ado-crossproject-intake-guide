@@ -1,6 +1,6 @@
 # Azure DevOps Cross-Project Intake Guide
 
-An enterprise-grade solution design guide for handling cross-project User Story intake in Azure DevOps — letting IT and business teams in other Azure DevOps projects submit work into a central PMO-style project (referenced here as the **P project** inside the **contoso** organization) while preserving 7Pace time tracking, audit compliance, and full traceability.
+An enterprise-grade solution design guide for handling cross-project User Story intake in Azure DevOps — letting IT and business teams in other Azure DevOps projects submit work into a central program-office project (referenced here as the **P project** inside the **contoso** organization) while preserving 7Pace time tracking, audit compliance, and full traceability.
 
 **Live site**: <http://demo.gilbertappiah.com/ado-crossproject-intake-guide/>
 **Default Pages URL**: <https://msft-contoso-university.github.io/ado-crossproject-intake-guide/>
@@ -34,6 +34,19 @@ Because this is an enterprise recommendation, every claim must be traceable to a
 - **How it's used**: GitHub Copilot (or any MCP-aware AI assistant) reads the skill to locate the correct Microsoft Learn URL for a topic, then fetches the live page before making a recommendation.
 
 Copilot behavior is encoded in [`.github/copilot-instructions.md`](./.github/copilot-instructions.md).
+
+### Agent-driven workflow — hve-core
+
+Alongside the Microsoft Learn skill, this work uses the **hve-core** agent pack from <https://github.com/microsoft/hve-core/tree/main/plugins/hve-core/agents/hve-core> to structure the research → plan → implement → review loop. The following agents (installed from that link) are invoked in sequence:
+
+| Agent | Role in this project |
+|---|---|
+| **Task Researcher** | Consults the `azure-devops` skill, fetches Microsoft Learn pages, and produces dated research documents under `.copilot-tracking/research/` — e.g. the gap analysis at `.copilot-tracking/research/2026-04-17/cross-project-intake-gap-analysis-research.md`. |
+| **Task Planner** | Converts research findings into a concrete implementation plan (section additions, new diagrams, new references) with prioritized, actionable steps. |
+| **Task Implementer** | Applies the plan to `index.html`, `README.md`, and supporting files, preserving enterprise conventions and citation discipline. |
+| **Reviewer(s)** | Validates that every new claim is backed by a Microsoft Learn citation, the enterprise lens is preserved, and no customer identifiers leaked. |
+
+This mirrors Microsoft's own high-value engineering practice of separating research, planning, implementation, and review — giving the solution design guide an auditable authoring chain that matches the auditability story it recommends to the customer.
 
 ### Why this matters for enterprise customers
 

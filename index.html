@@ -112,6 +112,10 @@
   <a href="#pattern-3">Pattern 3</a>
   <a href="#comparison">Compare</a>
   <a href="#implementation">Implementation</a>
+  <a href="#reporting">Reporting</a>
+  <a href="#alerts-sla">Alerts &amp; SLA</a>
+  <a href="#cockpit">Cockpit</a>
+  <a href="#ai-triage">AI Triage</a>
   <a href="#permissions">Permissions</a>
   <a href="#enterprise">Enterprise Governance</a>
   <a href="#7pace">7Pace</a>
@@ -159,8 +163,20 @@
   </div>
 
   <div class="callout callout-success" style="margin-top:24px;">
-    <p><strong>Key Microsoft guidance that shaped this design:</strong> Microsoft explicitly recommends <em>using a single project to support your organization or enterprise</em> and notes that moving work items between projects &ldquo;results in the loss of associated history.&rdquo; That is why our primary recommendation keeps the work inside the P project and uses Area Paths + automation to bring external teams in &mdash; rather than federating across many projects. See <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops#use-a-single-project" target="_blank">Use a single project</a>.</p>
+    <p><strong>Key Microsoft guidance that shaped this design:</strong> Microsoft explicitly recommends <em>using a single project to support your organization or enterprise</em> and notes that moving work items between projects &ldquo;results in the loss of associated history.&rdquo; That is why our primary recommendation keeps the work inside the P project and uses Area Paths + automation to bring external teams in &mdash; rather than federating across many projects. See <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops#use-a-single-project" target="_blank" rel="noopener">Use a single project</a>.</p>
   </div>
+
+  <h3 class="h4 mt-4 mb-3">Authoring chain &mdash; hve-core agents</h3>
+  <p style="font-size:15px; color:#24292f; line-height:1.6;">This guide is authored via the Microsoft <a href="https://github.com/microsoft/hve-core/tree/main/plugins/hve-core/agents/hve-core" target="_blank" rel="noopener">hve-core</a> agent pack. Work flows sequentially through four agents, each grounded in the <a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank" rel="noopener">MicrosoftDocs <code>azure-devops</code> skill</a>. All agent-to-agent state &mdash; research, plans, implementation, and reviews &mdash; persists under <code>.copilot-tracking/</code> in the source repository, giving every recommendation a traceable provenance.</p>
+  <table class="gov-table">
+    <thead><tr><th style="width:22%;">Agent</th><th style="width:42%;">Role</th><th>Output location</th></tr></thead>
+    <tbody>
+      <tr><td>Task Researcher</td><td>Gap analysis grounded in Microsoft Learn</td><td><code>.copilot-tracking/research/</code></td></tr>
+      <tr><td>Task Planner</td><td>Implementation plan &amp; details</td><td><code>.copilot-tracking/plans/</code> and <code>.copilot-tracking/details/</code></td></tr>
+      <tr><td>Task Implementer</td><td>Edits to <code>index.html</code> and <code>README.md</code></td><td>Repository files + <code>.copilot-tracking/changes/</code></td></tr>
+      <tr><td>Reviewer</td><td>Citation, sanitization &amp; enterprise-lens validation</td><td><code>.copilot-tracking/reviews/</code></td></tr>
+    </tbody>
+  </table>
 </div></section>
 
 <!-- ═══ PROBLEM ═══ -->
@@ -357,6 +373,24 @@
   <span class="keyword">AND</span> [Area Path] <span class="keyword">UNDER</span> <span class="string">'P\_Intake'</span>
   <span class="keyword">AND</span> [State] <span class="keyword">IN</span> (<span class="string">'New'</span>, <span class="string">'Proposed'</span>)
 <span class="keyword">ORDER BY</span> [Created Date] <span class="keyword">ASC</span></code></div>
+  </div>
+
+  <h3 class="h4 mt-4 mb-3">Enforce intake data quality with process rules</h3>
+  <p style="font-size:15px; color:#24292f; line-height:1.6;">Area-Path segregation stops people writing to the wrong team&rsquo;s backlog. <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/rule-reference?view=azure-devops" target="_blank" rel="noopener">Inherited-process rules</a> stop them submitting <em>incomplete</em> work. Add three rules to your P process so triage never has to chase missing context.</p>
+
+  <div class="pattern-card">
+    <h4 style="margin-top:0;">Rule 1 &mdash; Require <code>Custom.RequestingTeam</code> on intake</h4>
+    <p style="font-size:14px; color:#24292f;"><strong>Condition:</strong> <em>Area Path</em> is under <code>P\_Intake</code>. <strong>Action:</strong> Make <code>Custom.RequestingTeam</code> required. Submitters cannot save an intake story without naming their originating team, which feeds the reporting and SLA sections below. See <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/rule-samples?view=azure-devops" target="_blank" rel="noopener">rule samples</a>.</p>
+
+    <h4>Rule 2 &mdash; Require <code>Custom.BusinessJustification</code> before approval</h4>
+    <p style="font-size:14px; color:#24292f;"><strong>Condition:</strong> <em>State</em> transitions from <code>New</code> to <code>Approved</code>. <strong>Action:</strong> Make <code>Custom.BusinessJustification</code> required on that transition. Prevents rubber-stamp approvals and gives audit a traceable reason for every accepted intake. Cite <a href="https://learn.microsoft.com/en-us/azure/devops/reference/customize-work?view=azure-devops" target="_blank" rel="noopener">Customize work tracking</a> for the transition-rule model.</p>
+
+    <h4>Rule 3 &mdash; Restrict approvals by group membership</h4>
+    <p style="font-size:14px; color:#24292f;"><strong>Condition:</strong> Current user is a member of <code>[P]\Stakeholders</code>. <strong>Action:</strong> Prevent <em>State</em> transition from <code>New</code> to <code>Approved</code>. Stakeholder-licensed business reviewers can submit and comment but cannot approve &mdash; approval remains with the P triage role. Grounded in <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/set-permissions-access-work-tracking?view=azure-devops#customize-an-inherited-process" target="_blank" rel="noopener">work-tracking permissions</a>.</p>
+  </div>
+
+  <div class="callout callout-warn">
+    <p><strong>Caveat &mdash; what rules cannot do:</strong> Inherited-process rules cannot set or clear <em>Area Path</em> or <em>Iteration Path</em>, and cannot change the value of identity fields. Use Power Automate (Pattern 2) for path manipulation and the P triage role for re-parenting. Source: <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/rule-reference?view=azure-devops" target="_blank" rel="noopener">rule reference &mdash; limitations</a>.</p>
   </div>
 </div></section>
 
@@ -611,9 +645,224 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
       </ul>
     </div>
   </div>
+
+  <h3 class="h4 mt-4 mb-3">Onboarding existing requests &mdash; bulk import of in-flight intake</h3>  <p style="font-size:15px; color:#24292f; line-height:1.6;">On day one you will have a backlog of requests sitting in email, Teams chats, and tickets. Rather than re-type them, bring them in as <code>State=Approved</code> so they appear in the P backlog without firing SLA alerts as if they had just arrived.</p>
+
+  <h4>CSV column template &mdash; paste into Azure Boards</h4>
+  <p style="font-size:14px; color:#656d76;">Use <a href="https://learn.microsoft.com/en-us/azure/devops/boards/queries/import-work-items-from-csv?view=azure-devops" target="_blank" rel="noopener">Import work items from a CSV file</a>. Columns with a backslash must be quoted.</p>
+
+  <table class="gov-table">
+    <thead><tr><th>Column</th><th style="width:14%;">Required</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr><td><code>Work Item Type</code></td><td>yes</td><td>User Story</td></tr>
+      <tr><td><code>Title</code></td><td>yes</td><td>Intake &mdash; migrate payroll form</td></tr>
+      <tr><td><code>Area Path</code></td><td>yes</td><td>P\_Intake\Finance</td></tr>
+      <tr><td><code>Assigned To</code></td><td>no</td><td>(blank until triage)</td></tr>
+      <tr><td><code>Custom.RequestingTeam</code></td><td>yes</td><td>Finance IT</td></tr>
+      <tr><td><code>Custom.BusinessJustification</code></td><td>yes</td><td>Regulatory deadline 2026-Q3</td></tr>
+      <tr><td><code>State</code></td><td>yes</td><td><strong>Approved</strong> &mdash; bypasses new-item SLA alerts</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warn">
+    <p><strong>Set State = Approved on bulk-imported items.</strong> Importing at <code>State=New</code> will fire the 2-day triage alert from the <a href="#alerts-sla">Alerts &amp; SLA</a> section the moment the import finishes, flooding the Teams channel with dozens of false positives. Approve on import, let triage re-parent to team Areas, and only new submissions enter the SLA window.</p>
+  </div>
+
+  <p style="font-size:14px; color:#656d76; margin-top:16px;">For continuous reconciliation against an existing spreadsheet-based intake log, connect Excel directly to Boards &mdash; see <a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/office/bulk-add-modify-work-items-excel?view=azure-devops" target="_blank" rel="noopener">Bulk add or modify work items with Excel</a>. The <em>Publish</em> round-trip keeps the CSV and ADO in sync until teams migrate fully into Boards.</p>
 </div></section>
 
-<!-- ═══ PERMISSIONS ═══ -->
+<!-- ═══ REPORTING (Gap 1) ═══ -->
+<section id="reporting" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">Enterprise Reporting &mdash; Analytics &amp; Power BI</h2>
+  <p class="section-lead">WIQL is fine for triage queues. It is not enough for a program office that needs cross-project funnel metrics, SLA compliance trends, and lead-time histograms. Microsoft&rsquo;s supported reporting plane for Azure Boards is <strong>Analytics</strong>, surfaced to Power BI via OData. Plug the intake area in and you get enterprise-grade reporting with no custom ETL.</p>
+
+  <div class="callout">
+    <p><strong>Analytics vs. WIQL.</strong> WIQL returns the current state of work items. Analytics stores historical snapshots &mdash; every state change, every day &mdash; so you can calculate <em>cycle time</em>, <em>time in state</em>, cumulative flow, and throughput trends. See <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/what-is-analytics?view=azure-devops" target="_blank" rel="noopener">What is the Analytics service?</a> and <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/data-available-in-analytics?view=azure-devops" target="_blank" rel="noopener">data available in Analytics</a>.</p>
+  </div>
+
+  <h3 class="h4 mt-4 mb-3">Canonical OData URL for the P intake funnel</h3>
+  <p style="font-size:14px; color:#656d76;">Use the <strong>organization-scoped</strong> endpoint so the same query spans every source project whose submissions land in P. Per <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/account-scoped-queries?view=azure-devops" target="_blank" rel="noopener">account-scoped queries</a>, this form is the only one that supports cross-project reporting.</p>
+
+  <div class="code-block"><code>https://analytics.dev.azure.com/contoso/_odata/v4.0-preview/WorkItems
+  ?$filter=WorkItemType eq <span class="string">'User Story'</span>
+       <span class="keyword">and</span> startswith(Area/AreaPath, <span class="string">'P\_Intake'</span>)
+       <span class="keyword">and</span> State <span class="keyword">ne</span> <span class="string">'Closed'</span>
+  &amp;$select=WorkItemId,Title,State,CreatedDate,StateChangeDate,ChangedDate
+  &amp;$expand=AssignedTo($select=UserName)</code></div>
+
+  <p style="font-size:14px; color:#656d76;">Follow the <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/odata-query-guidelines?view=azure-devops" target="_blank" rel="noopener">OData query guidelines</a> for paging, <code>$apply</code> aggregations, and performance. For starting points, reference the <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-stories-overview?view=azure-devops" target="_blank" rel="noopener">stories overview</a>, <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-boards-leadcycletime?view=azure-devops" target="_blank" rel="noopener">lead &amp; cycle time</a>, and <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-boards-cfd?view=azure-devops" target="_blank" rel="noopener">cumulative flow diagram</a> recipes.</p>
+
+  <h3 class="h4 mt-4 mb-3">Power BI dashboard blueprint &mdash; five pages</h3>
+  <div class="grid-3">
+    <div class="feature-card">
+      <h3>1. Intake funnel</h3>
+      <p>Count of stories by State across <code>P\_Intake</code> sub-areas over the last 90 days. Stacked bar by requesting team.</p>
+    </div>
+    <div class="feature-card">
+      <h3>2. SLA compliance</h3>
+      <p>% of intakes triaged within 2 business days, trended weekly. Split by requesting team to expose hot spots.</p>
+    </div>
+    <div class="feature-card">
+      <h3>3. Lead-time histogram</h3>
+      <p>Submitted &rarr; Closed lead time, distribution view. Identifies long-tail outliers for process improvement.</p>
+    </div>
+    <div class="feature-card">
+      <h3>4. Cycle-time control chart</h3>
+      <p>Control chart of time spent in <em>Active</em> after triage. DAX pattern from <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-boards-timeinstate?view=azure-devops" target="_blank" rel="noopener">time-in-state sample</a>.</p>
+    </div>
+    <div class="feature-card">
+      <h3>5. Cross-team linkage trace</h3>
+      <p>Matrix of source project &times; P team, with linked-work-item counts. Proves the federation model is working without consolidating projects.</p>
+    </div>
+    <div class="feature-card">
+      <h3>(Optional) Burn-up</h3>
+      <p>Backlog burn-up for intakes closed vs. remaining &mdash; follows the <a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/burndown-burnup?view=azure-devops" target="_blank" rel="noopener">burndown/burnup</a> recipe.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <p><strong>Permission required: <em>View analytics</em>.</strong> Every member of the P Power BI workspace must have <em>View analytics</em> granted on the P project. Granting is per-project; the service account connecting Power BI also needs it. See <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/analytics-security?view=azure-devops" target="_blank" rel="noopener">Analytics permissions &amp; prerequisites</a>.</p>
+  </div>
+</div></section>
+
+<!-- ═══ ALERTS & SLA (Gap 2) ═══ -->
+<section id="alerts-sla" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">Operationalizing the Queue &mdash; Alerts &amp; SLA</h2>
+  <p class="section-lead">An intake SLA only exists if alerting is automated. Azure DevOps ships two native mechanisms &mdash; <a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview?view=azure-devops" target="_blank" rel="noopener">Service hooks</a> for external targets and <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/notifications/about-notifications?view=azure-devops" target="_blank" rel="noopener">Notification subscriptions</a> for email. Wire both to the P intake area.</p>
+
+  <h3 class="h4 mt-4 mb-3">Trigger &rarr; Subscription &rarr; Target</h3>
+  <table class="gov-table">
+    <thead><tr><th style="width:26%;">Trigger</th><th style="width:32%;">Filter / condition</th><th>Target</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>workitem.created</code></td>
+        <td><em>Area Path</em> = <code>P\_Intake</code>; Work Item Type = User Story</td>
+        <td>Teams channel <strong>P Triage</strong> (adaptive card) via <a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/events?view=azure-devops" target="_blank" rel="noopener">event types reference</a></td>
+      </tr>
+      <tr>
+        <td><code>workitem.updated</code></td>
+        <td><em>State</em> changed to <code>Approved</code></td>
+        <td>Email the requesting team DL &mdash; see <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/notifications/manage-your-personal-notifications?view=azure-devops" target="_blank" rel="noopener">notification recipients</a></td>
+      </tr>
+      <tr>
+        <td>Scheduled overdue query</td>
+        <td>Run every 4h; WIQL below</td>
+        <td>Teams incoming webhook &mdash; P escalation channel</td>
+      </tr>
+      <tr>
+        <td><code>workitem.created</code></td>
+        <td>Area Path outside <code>P\_Intake</code> but created by non-P identity</td>
+        <td>Security DL (indicates RBAC drift &mdash; reconcile against <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/restrict-invitations?view=azure-devops" target="_blank" rel="noopener">restrict-invitations</a>)</td>
+      </tr>
+      <tr>
+        <td>Subscription delivery failure</td>
+        <td>Any service-hook retry exhausted</td>
+        <td>PCA DL &mdash; per <a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/troubleshoot?view=azure-devops" target="_blank" rel="noopener">subscription logging &amp; troubleshooting</a></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="h4 mt-4 mb-3">Example &mdash; service-hook filter for <code>workitem.created</code></h3>
+  <p style="font-size:14px; color:#656d76;">Configured via <em>Project settings &rarr; Service hooks &rarr; Create subscription</em>. Use Area Path scope so you never alert on team-internal stories.</p>
+  <div class="code-block"><code>{
+  <span class="label">"publisherId"</span>: <span class="string">"tfs"</span>,
+  <span class="label">"eventType"</span>: <span class="string">"workitem.created"</span>,
+  <span class="label">"resourceVersion"</span>: <span class="string">"1.0"</span>,
+  <span class="label">"consumerId"</span>: <span class="string">"teamRoom"</span>,
+  <span class="label">"consumerActionId"</span>: <span class="string">"postMessageToChannel"</span>,
+  <span class="label">"publisherInputs"</span>: {
+    <span class="label">"projectId"</span>: <span class="string">"&lt;P project GUID&gt;"</span>,
+    <span class="label">"areaPath"</span>: <span class="string">"P\\_Intake"</span>,
+    <span class="label">"workItemType"</span>: <span class="string">"User Story"</span>
+  }
+}</code></div>
+
+  <h3 class="h4 mt-4 mb-3">Overdue WIQL &mdash; powers the 4-hour scheduled alert</h3>
+  <div class="code-block"><code><span class="keyword">SELECT</span> [Id], [Title], [Created Date], [Created By]
+<span class="keyword">FROM</span> workitems
+<span class="keyword">WHERE</span> [Work Item Type] = <span class="string">'User Story'</span>
+  <span class="keyword">AND</span> [Area Path] <span class="keyword">UNDER</span> <span class="string">'P\_Intake'</span>
+  <span class="keyword">AND</span> [State] = <span class="string">'New'</span>
+  <span class="keyword">AND</span> [Created Date] &lt; @today - 2
+<span class="keyword">ORDER BY</span> [Created Date] <span class="keyword">ASC</span></code></div>
+
+  <div class="callout callout-success">
+    <p><strong>Audit trail.</strong> Every service-hook delivery and every notification subscription change is captured in the Azure DevOps audit log &mdash; the same log that the <a href="#enterprise">Enterprise Governance</a> section streams to Microsoft Sentinel. Alerting and auditability are the same control, wired in one place. For default out-of-the-box notifications consumed by the P triage team, review <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/notifications/oob-built-in-notifications?view=azure-devops" target="_blank" rel="noopener">default subscriptions</a>. For third-party targets (PagerDuty, Opsgenie), see <a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview?view=azure-devops#services" target="_blank" rel="noopener">third-party integration options</a>.</p>
+  </div>
+</div></section>
+
+<!-- ═══ COCKPIT (Gap 4) ═══ -->
+<section id="cockpit" class="section">
+<div class="container-xl px-3">
+  <h2 class="section-title">Intake Cockpit &mdash; Project Dashboard Blueprint</h2>
+  <p class="section-lead">One place the P triage opens first every morning. Six widgets, one dashboard, scoped to the P project so permissions follow the existing project model. See the <a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/overview?view=azure-devops" target="_blank" rel="noopener">Dashboards overview</a> and the <a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/widget-catalog?view=azure-devops" target="_blank" rel="noopener">widget catalog</a>.</p>
+
+  <div class="grid-3">
+    <div class="feature-card">
+      <h3>1. Open Intake (tile)</h3>
+      <p><em>Query tile</em> widget pointing at the <strong>P Intake Queue</strong> shared query. Single count, large font, one-click drill-in.</p>
+    </div>
+    <div class="feature-card">
+      <h3>2. Intake by requesting team</h3>
+      <p><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/charts?view=azure-devops" target="_blank" rel="noopener">Chart for Work Items</a> widget grouped by <code>Custom.RequestingTeam</code> &mdash; stacked bar.</p>
+    </div>
+    <div class="feature-card">
+      <h3>3. Cumulative Flow</h3>
+      <p><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/cumulative-flow?view=azure-devops" target="_blank" rel="noopener">CFD widget</a> across New / Approved / Active / Closed over 90 days.</p>
+    </div>
+    <div class="feature-card">
+      <h3>4. Overdue triage</h3>
+      <p><em>Query Results</em> widget wired to the overdue WIQL from the <a href="#alerts-sla">Alerts &amp; SLA</a> section. Red when count &gt; 0.</p>
+    </div>
+    <div class="feature-card">
+      <h3>5. Lead Time</h3>
+      <p><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/analytics-widgets?view=azure-devops" target="_blank" rel="noopener">Lead Time Analytics widget</a> &mdash; median New &rarr; Active by week.</p>
+    </div>
+    <div class="feature-card">
+      <h3>6. Submission instructions</h3>
+      <p><em>Markdown</em> widget linking to the intake Wiki page and the Microsoft Form. The one-stop onboarding pointer for new teams.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-warn">
+    <p><strong>Dashboard ownership.</strong> Create this as a <em>project dashboard</em> (not a team dashboard) so it rolls up the whole intake funnel. Grant <em>Edit</em> to the <code>P Triage</code> custom group only; everyone else gets <em>View</em>. Reference <a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/dashboard-permissions?view=azure-devops" target="_blank" rel="noopener">dashboard permissions</a>. Velocity and burndown widget options are documented in <a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/team-velocity?view=azure-devops" target="_blank" rel="noopener">velocity</a> and <a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/configure-sprint-burndown?view=azure-devops" target="_blank" rel="noopener">sprint burndown</a> if you later want delivery views on the same dashboard.</p>
+  </div>
+</div></section>
+
+<!-- ═══ AI TRIAGE (Gap 7) ═══ -->
+<section id="ai-triage" class="section section-alt">
+<div class="container-xl px-3">
+  <h2 class="section-title">AI-Assisted Triage <span class="pill pill-gray">Optional</span></h2>
+  <p class="section-lead">For organizations already using MCP-aware AI assistants (Copilot Chat, Claude, Cursor), the <a href="https://learn.microsoft.com/en-us/azure/devops/mcp-server/mcp-server-overview?view=azure-devops" target="_blank" rel="noopener">Azure DevOps MCP Server</a> exposes work-item, query, and audit operations as tool calls. The P triage role can summarize and route the intake queue with natural-language prompts &mdash; without building custom integrations.</p>
+
+  <div class="grid-2">
+    <div class="feature-card">
+      <h3>&ldquo;Summarize the backlog&rdquo;</h3>
+      <p style="font-style:italic; color:#24292f;">&ldquo;List all User Stories in <code>P\_Intake</code> older than 3 days and summarize by requesting team.&rdquo;</p>
+      <p style="font-size:13px; color:#656d76;">Feeds the 4-hour overdue alert with narrative context before triage.</p>
+    </div>
+    <div class="feature-card">
+      <h3>&ldquo;Link across projects&rdquo;</h3>
+      <p style="font-style:italic; color:#24292f;">&ldquo;Add a <em>Related</em> link from work item 1234 in P to the source work item in the Apps project.&rdquo;</p>
+      <p style="font-size:13px; color:#656d76;">Automates the cross-project traceability step when the flow was not used.</p>
+    </div>
+    <div class="feature-card">
+      <h3>&ldquo;Investigate audit&rdquo;</h3>
+      <p style="font-style:italic; color:#24292f;">&ldquo;Investigate audit log for permission changes on <code>P\_Intake</code> in the last 7 days.&rdquo;</p>
+      <p style="font-size:13px; color:#656d76;">Reviews access drift &mdash; useful before quarterly identity reviews.</p>
+    </div>
+    <div class="feature-card">
+      <h3>Remote endpoint</h3>
+      <p>Configure the hosted <a href="https://learn.microsoft.com/en-us/azure/devops/mcp-server/remote-mcp-server?view=azure-devops" target="_blank" rel="noopener">Remote MCP Server</a> URL in the AI client. Authentication uses the caller&rsquo;s Microsoft Entra identity &mdash; no service account to steward.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><strong>Optional layer.</strong> Every control in this guide works without MCP. Add MCP only when you have AI-assistant adoption and want natural-language access to the same capabilities. Audit coverage is unchanged &mdash; every tool call runs under the caller&rsquo;s identity and appears in the audit log.</p>
+  </div>
+</div></section>
 <section id="permissions" class="section">
 <div class="container-xl px-3">
   <h2 class="section-title">Permissions Matrix</h2>
@@ -716,17 +965,17 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
       <tr>
         <td>Change management traceability</td>
         <td>Cross-project <em>Related</em> links + <a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/add-link?view=azure-devops" target="_blank">link types</a></td>
-        <td>The source WIT in the requester&rsquo;s project and the PMO delivery WIT are linked bidirectionally. Auditors can follow the chain from request to delivery to deployment.</td>
+        <td>The source WIT in the requester&rsquo;s project and the P delivery WIT are linked bidirectionally. Auditors can follow the chain from request to delivery to deployment.</td>
       </tr>
       <tr>
         <td>Scoped visibility for external teams</td>
         <td><em>Limit user visibility and collaboration to specific projects</em> preview feature + Project-Scoped Users group</td>
-        <td>Submitters from other parts of the org only see the P project (and specifically the Intake area), not the entire PMO internals. Reduces information exposure.</td>
+        <td>Submitters from other parts of the org only see the P project (and specifically the Intake area), not the entire P program internals. Reduces information exposure.</td>
       </tr>
       <tr>
         <td>Licensing governance</td>
         <td><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/stakeholder-access?view=azure-devops" target="_blank">Stakeholder access</a></td>
-        <td>Stakeholder (free) users in a <strong>private</strong> PMO project can view, add, and edit work items under Area Paths they have access to, but cannot change priority via drag-drop or delete. Good for read/submit-only business reviewers.</td>
+        <td>Stakeholder (free) users in a <strong>private</strong> P project can view, add, and edit work items under Area Paths they have access to, but cannot change priority via drag-drop or delete. Good for read/submit-only business reviewers.</td>
       </tr>
     </tbody>
   </table>
@@ -734,6 +983,44 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
   <div class="callout callout-warn">
     <p><strong>Microsoft&rsquo;s enterprise guidance:</strong> Microsoft recommends one project per organization wherever practical, adding additional projects only when you need to (1) prohibit cross-project information access, (2) support entirely separate business units with their own admin policies, or (3) support materially different work tracking processes. If other teams&rsquo; projects exist for historical reasons rather than a clear reason on that list, a medium-term consolidation project is worth considering &mdash; the intake workflow becomes unnecessary if everyone already lives in a single project with well-designed Area Paths. Source: <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops#add-another-project" target="_blank">About projects &mdash; Add another project</a>.</p>
   </div>
+
+  <h3 class="h4 mt-4 mb-3">Scale &amp; limits &mdash; will P absorb 5 years of intake?</h3>
+  <p style="font-size:14px; color:#656d76;">Before you concentrate an enterprise&rsquo;s intake into one project, size against Microsoft&rsquo;s published <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/object-limits?view=azure-devops" target="_blank" rel="noopener">work tracking object limits</a> and <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops" target="_blank" rel="noopener">naming restrictions</a>. At 50 intakes/week &times; 50 weeks &times; 5 years = 12,500 stories, the intake funnel is comfortably under every ceiling below.</p>
+
+  <table class="gov-table">
+    <thead><tr><th>Object</th><th style="width:22%;">Ceiling</th><th>Intake footprint</th></tr></thead>
+    <tbody>
+      <tr><td>Projects per organization</td><td>Very high (no practical limit)</td><td>1 (P consolidates intake)</td></tr>
+      <tr><td>Teams per project</td><td>Very high</td><td>P teams + 1 triage team</td></tr>
+      <tr><td>Area paths per team (default)</td><td>300</td><td>1 root + 1 per requesting team &lt;&lt; 300</td></tr>
+      <tr><td>Area-path tree depth</td><td>14 levels</td><td>3 levels used (P \ _Intake \ ForTeamX)</td></tr>
+      <tr><td>Custom fields per process</td><td>1,024</td><td>3 (RequestingTeam, BusinessJustification, Impact)</td></tr>
+      <tr><td>Shared queries per project</td><td>High (soft limit)</td><td>1 intake queue + 3 SLA queries</td></tr>
+      <tr><td>Delivery plans per project</td><td>High (soft limit)</td><td>1 (intake + team swim lanes) &mdash; see <a href="https://learn.microsoft.com/en-us/azure/devops/reference/add-portfolio-backlogs?view=azure-devops" target="_blank" rel="noopener">portfolio backlogs</a></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-success">
+    <p><strong>Headroom.</strong> At projected volume, intake will consume roughly 0.3% of the Area-Path ceiling and a single-digit percentage of custom-field, query, and delivery-plan limits across a five-year horizon. No architectural re-work should be required at growth; re-evaluate if annual intake volume crosses 10,000 stories/year.</p>
+  </div>
+
+  <h3 class="h4 mt-4 mb-3">Identity lifecycle &mdash; joiner, mover, leaver</h3>
+  <p style="font-size:14px; color:#656d76;">Access to the P intake area is only as trustworthy as the upstream identity process. Microsoft Entra ID is the control plane; Azure DevOps consumes its group memberships. See <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/manage-azure-active-directory-groups?view=azure-devops" target="_blank" rel="noopener">manage access via Entra ID</a>.</p>
+
+  <pre class="ascii-diagram">
+HR system  ──▶  Entra ID group  ──▶  ADO security group  ──▶  Project access
+    │                                                                │
+    └── termination ──▶ group membership removed ──▶ access revoked automatically
+  </pre>
+
+  <ul style="font-size:14px; color:#24292f; line-height:1.8;">
+    <li><strong>Joiner.</strong> HR provisioning writes the user to the corporate Entra group. The group is mapped to the <code>P Intake Submitters</code> ADO security group. Access appears automatically &mdash; no ticket.</li>
+    <li><strong>Mover.</strong> Entra group changes propagate in minutes. Combined with a nightly <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/export-users-audit-log?view=azure-devops" target="_blank" rel="noopener">export-users audit</a>, drift between HR and ADO is caught within 24h.</li>
+    <li><strong>Leaver.</strong> Termination removes the Entra group membership; ADO access revokes without manual cleanup. Reconcile quarterly against HR using the same export-users audit plus the security <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/security-powershell-script-examples?view=azure-devops" target="_blank" rel="noopener">PowerShell samples</a>.</li>
+    <li><strong>External invitations.</strong> <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/restrict-invitations?view=azure-devops" target="_blank" rel="noopener">Restrict invitations to Project Collection Administrators</a> to prevent team members from bringing in guest accounts unilaterally.</li>
+    <li><strong>Third-party OAuth.</strong> Disable third-party application access via the <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/change-application-access-policies?view=azure-devops" target="_blank" rel="noopener">application-access policy</a> unless an explicit workload identity (e.g. Power Automate) requires it.</li>
+    <li><strong>Data residency.</strong> Confirm your organization is provisioned in the intended region for compliance per <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/data-location?view=azure-devops" target="_blank" rel="noopener">Azure DevOps data location</a>.</li>
+  </ul>
 </div></section>
 
 <!-- ═══ 7PACE ═══ -->
@@ -834,35 +1121,89 @@ Authorization: Bearer &lt;PAT or OAuth token&gt;
     <div>
       <h4 style="color:#f0f6fc;font-size:14px;">Azure Boards &amp; Areas</h4>
       <ul style="list-style:none;padding:0;line-height:2;">
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops" target="_blank">About projects &amp; scaling your organization</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-teams-and-settings?view=azure-devops" target="_blank">About teams &amp; Agile tools</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/set-area-paths?view=azure-devops" target="_blank">Define Area Paths &amp; assign to a team</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/move-change-type?view=azure-devops" target="_blank">Move or change type of a work item</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/add-link?view=azure-devops" target="_blank">Link work items &amp; traceability</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/plans/review-team-plans?view=azure-devops" target="_blank">Delivery Plans</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops" target="_blank" rel="noopener">About projects &amp; scaling your organization</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/about-teams-and-settings?view=azure-devops" target="_blank" rel="noopener">About teams &amp; Agile tools</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/set-area-paths?view=azure-devops" target="_blank" rel="noopener">Define Area Paths &amp; assign to a team</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/move-change-type?view=azure-devops" target="_blank" rel="noopener">Move or change type of a work item</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/add-link?view=azure-devops" target="_blank" rel="noopener">Link work items &amp; traceability</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/plans/review-team-plans?view=azure-devops" target="_blank" rel="noopener">Delivery Plans</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/queries/import-work-items-from-csv?view=azure-devops" target="_blank" rel="noopener">Import work items from CSV</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/office/bulk-add-modify-work-items-excel?view=azure-devops" target="_blank" rel="noopener">Bulk add or modify work items with Excel</a></li>
+      </ul>
+      <h4 style="color:#f0f6fc;font-size:14px;margin-top:16px;">Reporting &amp; Analytics</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/what-is-analytics?view=azure-devops" target="_blank" rel="noopener">What is the Analytics service?</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/data-available-in-analytics?view=azure-devops" target="_blank" rel="noopener">Data available in Analytics</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/account-scoped-queries?view=azure-devops" target="_blank" rel="noopener">Org-scoped (account-scoped) OData queries</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/odata-query-guidelines?view=azure-devops" target="_blank" rel="noopener">OData query guidelines</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-stories-overview?view=azure-devops" target="_blank" rel="noopener">Stories overview sample</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-boards-leadcycletime?view=azure-devops" target="_blank" rel="noopener">Lead &amp; cycle time sample</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-boards-cfd?view=azure-devops" target="_blank" rel="noopener">Cumulative flow diagram sample</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/sample-boards-timeinstate?view=azure-devops" target="_blank" rel="noopener">Time-in-state DAX sample</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/analytics-security?view=azure-devops" target="_blank" rel="noopener">Analytics permissions &amp; prerequisites</a></li>
       </ul>
     </div>
     <div>
       <h4 style="color:#f0f6fc;font-size:14px;">Governance, Security &amp; Automation</h4>
       <ul style="list-style:none;padding:0;line-height:2;">
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/set-permissions-access-work-tracking?view=azure-devops" target="_blank">Set work tracking permissions</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/azure-devops-auditing?view=azure-devops" target="_blank">Azure DevOps auditing</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/auditing-streaming?view=azure-devops" target="_blank">Audit streaming to SIEM</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/reference/customize-work?view=azure-devops" target="_blank">Customize your work tracking experience</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/connectors/visualstudioteamservices/" target="_blank">Power Automate &mdash; Azure DevOps connector</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview?view=azure-devops" target="_blank">Service Hooks overview</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/create" target="_blank">REST API &mdash; Create work item</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/set-permissions-access-work-tracking?view=azure-devops" target="_blank" rel="noopener">Set work tracking permissions</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/azure-devops-auditing?view=azure-devops" target="_blank" rel="noopener">Azure DevOps auditing</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/auditing-streaming?view=azure-devops" target="_blank" rel="noopener">Audit streaming to SIEM</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/reference/customize-work?view=azure-devops" target="_blank" rel="noopener">Customize your work tracking experience</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/connectors/visualstudioteamservices/" target="_blank" rel="noopener">Power Automate &mdash; Azure DevOps connector</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/create" target="_blank" rel="noopener">REST API &mdash; Create work item</a></li>
+      </ul>
+      <h4 style="color:#f0f6fc;font-size:14px;margin-top:16px;">Service hooks &amp; notifications</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview?view=azure-devops" target="_blank" rel="noopener">Service hooks overview</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/events?view=azure-devops" target="_blank" rel="noopener">Event types reference</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/troubleshoot?view=azure-devops" target="_blank" rel="noopener">Subscription logging &amp; troubleshooting</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/notifications/about-notifications?view=azure-devops" target="_blank" rel="noopener">About notifications</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/notifications/oob-built-in-notifications?view=azure-devops" target="_blank" rel="noopener">Default subscriptions</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/notifications/manage-your-personal-notifications?view=azure-devops" target="_blank" rel="noopener">Notification recipients</a></li>
+      </ul>
+      <h4 style="color:#f0f6fc;font-size:14px;margin-top:16px;">Inherited process rules</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/rule-reference?view=azure-devops" target="_blank" rel="noopener">Rule reference</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/rule-samples?view=azure-devops" target="_blank" rel="noopener">Rule samples</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/custom-rules?view=azure-devops" target="_blank" rel="noopener">Custom rules on Inherited process</a></li>
       </ul>
     </div>
     <div>
       <h4 style="color:#f0f6fc;font-size:14px;">Licensing, 7Pace &amp; Skill Source</h4>
       <ul style="list-style:none;padding:0;line-height:2;">
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/stakeholder-access?view=azure-devops" target="_blank">Stakeholder access quick reference</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/access-levels?view=azure-devops" target="_blank">Access levels (Stakeholder / Basic / Basic+Test Plans)</a></li>
-        <li><a href="https://support.7pace.com/hc/en-us" target="_blank">7Pace Timetracker support</a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/work-items/work-item-template?view=azure-devops" target="_blank">Work item templates</a></li>
-        <li><a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank"><strong>MicrosoftDocs azure-devops agent skill</strong></a></li>
-        <li><a href="https://learn.microsoft.com/en-us/azure/devops/mcp-server/mcp-server-overview?view=azure-devops" target="_blank">Azure DevOps MCP Server (AI assistance)</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/stakeholder-access?view=azure-devops" target="_blank" rel="noopener">Stakeholder access quick reference</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/access-levels?view=azure-devops" target="_blank" rel="noopener">Access levels (Stakeholder / Basic / Basic+Test Plans)</a></li>
+        <li><a href="https://support.7pace.com/hc/en-us" target="_blank" rel="noopener">7Pace Timetracker support</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/boards/work-items/work-item-template?view=azure-devops" target="_blank" rel="noopener">Work item templates</a></li>
+        <li><a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank" rel="noopener"><strong>MicrosoftDocs azure-devops agent skill</strong></a></li>
+        <li><a href="https://github.com/microsoft/hve-core/tree/main/plugins/hve-core/agents/hve-core" target="_blank" rel="noopener"><strong>Microsoft hve-core agent pack</strong></a></li>
+      </ul>
+      <h4 style="color:#f0f6fc;font-size:14px;margin-top:16px;">Dashboards</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/overview?view=azure-devops" target="_blank" rel="noopener">Dashboards overview</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/widget-catalog?view=azure-devops" target="_blank" rel="noopener">Widget catalog</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/analytics-widgets?view=azure-devops" target="_blank" rel="noopener">Analytics widgets</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/charts?view=azure-devops" target="_blank" rel="noopener">Chart for Work Items</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/cumulative-flow?view=azure-devops" target="_blank" rel="noopener">Cumulative flow widget</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/team-velocity?view=azure-devops" target="_blank" rel="noopener">Team velocity</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/configure-sprint-burndown?view=azure-devops" target="_blank" rel="noopener">Sprint burndown / burnup</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/burndown-burnup?view=azure-devops" target="_blank" rel="noopener">Burndown/burnup guidance</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/report/dashboards/dashboard-permissions?view=azure-devops" target="_blank" rel="noopener">Dashboard permissions</a></li>
+      </ul>
+      <h4 style="color:#f0f6fc;font-size:14px;margin-top:16px;">Object limits, Entra &amp; MCP</h4>
+      <ul style="list-style:none;padding:0;line-height:2;">
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/work/object-limits?view=azure-devops" target="_blank" rel="noopener">Work tracking object limits</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/settings/naming-restrictions?view=azure-devops" target="_blank" rel="noopener">Naming restrictions</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/reference/add-portfolio-backlogs?view=azure-devops" target="_blank" rel="noopener">Portfolio backlogs</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/manage-azure-active-directory-groups?view=azure-devops" target="_blank" rel="noopener">Manage access via Entra ID</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/restrict-invitations?view=azure-devops" target="_blank" rel="noopener">Restrict invitations</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/export-users-audit-log?view=azure-devops" target="_blank" rel="noopener">Export users audit log</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/security-powershell-script-examples?view=azure-devops" target="_blank" rel="noopener">Security PowerShell samples</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/change-application-access-policies?view=azure-devops" target="_blank" rel="noopener">Application-access / OAuth policies</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/data-location?view=azure-devops" target="_blank" rel="noopener">Azure DevOps data location</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/mcp-server/mcp-server-overview?view=azure-devops" target="_blank" rel="noopener">Azure DevOps MCP Server overview</a></li>
+        <li><a href="https://learn.microsoft.com/en-us/azure/devops/mcp-server/remote-mcp-server?view=azure-devops" target="_blank" rel="noopener">Remote MCP Server</a></li>
       </ul>
     </div>
   </div>
