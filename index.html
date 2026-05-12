@@ -96,6 +96,66 @@
     .kv-list li:last-child { border-bottom: 0; }
     .kv-list .kv-key { font-weight: 600; color: #24292f; min-width: 180px; }
     .kv-list .kv-val { color: #656d76; flex: 1; }
+
+    /* ── Animated Recommended Solution stage ── */
+    .solution-stage {
+      background: linear-gradient(180deg, #0d1117 0%, #0a1a2e 100%);
+      border: 1px solid #30363d; border-radius: 14px;
+      padding: 28px; margin: 16px 0 8px; position: relative; overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+    }
+    .solution-stage svg { width: 100%; height: auto; display: block; max-width: 1100px; margin: 0 auto; }
+    .solution-stage .stage-caption { text-align: center; color: #8b949e; font-size: 12px; margin-top: 14px; letter-spacing: 0.5px; }
+    .solution-stage .stage-caption strong { color: #79c0ff; }
+
+    /* Flowing dashed connectors */
+    @keyframes flowDashIdx { to { stroke-dashoffset: -36; } }
+    .sol-flow { stroke-dasharray: 6 6; }
+    .sol-stage-anim .sol-flow { animation: flowDashIdx 1.6s linear infinite; }
+
+    /* Pulsing core ring on P */
+    @keyframes pulseRingIdx { 0% { r: 50; opacity: 0.55; } 100% { r: 86; opacity: 0; } }
+    .sol-pulse { fill: none; stroke: #2da44e; stroke-width: 2; transform-origin: center; }
+    .sol-stage-anim .sol-pulse { animation: pulseRingIdx 2.2s ease-out infinite; }
+
+    /* Sequential step-badge highlight */
+    @keyframes stepGlow {
+      0%, 100% { fill: #21262d; stroke: #30363d; }
+      50% { fill: #0078d4; stroke: #79c0ff; }
+    }
+    .sol-stage-anim .sol-step-1 { animation: stepGlow 4.5s ease-in-out infinite; animation-delay: 0s; }
+    .sol-stage-anim .sol-step-2 { animation: stepGlow 4.5s ease-in-out infinite; animation-delay: 1.5s; }
+    .sol-stage-anim .sol-step-3 { animation: stepGlow 4.5s ease-in-out infinite; animation-delay: 3s; }
+
+    /* Reveal-on-scroll for layer cards */
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.in-view { opacity: 1; transform: none; }
+    .reveal-stagger > * { opacity: 0; transform: translateY(18px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .reveal-stagger.in-view > *:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.05s; }
+    .reveal-stagger.in-view > *:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.25s; }
+    .reveal-stagger.in-view > *:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.45s; }
+    .reveal-stagger.in-view > *:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.65s; }
+
+    /* Feature-card lift on hover for layer cards */
+    .feature-card.layer-card { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
+    .feature-card.layer-card:hover { transform: translateY(-4px); }
+    .feature-card.layer-card .layer-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 800;
+      color: #fff; margin-right: 8px;
+    }
+    .feature-card.layer-card .layer-num.l1 { background: #0078d4; }
+    .feature-card.layer-card .layer-num.l2 { background: #f2b705; color: #1c1c1c; }
+    .feature-card.layer-card .layer-num.l3 { background: #2da44e; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sol-stage-anim .sol-flow,
+      .sol-stage-anim .sol-pulse,
+      .sol-stage-anim .sol-step-1,
+      .sol-stage-anim .sol-step-2,
+      .sol-stage-anim .sol-step-3 { animation: none !important; }
+      .reveal, .reveal-stagger > * { opacity: 1 !important; transform: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -287,48 +347,140 @@
   <h2 class="section-title">Recommended Solution</h2>
   <p class="section-lead">We recommend a <strong>two-layer intake model</strong> that combines a dedicated intake area inside P with a lightweight automation front door for teams that shouldn&rsquo;t have direct P access. It works today, requires no custom code, and layers in optional enhancements as you grow.</p>
 
-  <div class="ascii-diagram"><span class="accent-mute">┌─────────────────────────────────────────────────────────────────────────────────┐</span>
-<span class="accent-mute">│</span>                         <span class="accent-gold">AZURE DEVOPS ORGANIZATION</span>                          <span class="accent-mute">│</span>
-<span class="accent-mute">├─────────────────────────────────────────────────────────────────────────────────┤</span>
-<span class="accent-mute">│</span>                                                                                 <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   <span class="accent-azure">Project: Business-Ops</span>           <span class="accent-azure">Project: IT-Other</span>          <span class="accent-green">Project: P</span>       <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   ┌──────────────────┐         ┌──────────────────┐      ┌──────────────────┐   <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   │ Business team    │         │ IT team (other)  │      │ P\_Intake      │   <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   │ backlog          │         │ backlog          │      │ (triage queue)   │   <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   └────────┬─────────┘         └────────┬─────────┘      └────────┬─────────┘   <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>            │ 1. Submit via Form/Flow    │ 1. Submit directly       │             <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>            ▼                            ▼                          │             <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   ┌─────────────────────────────────────────────────┐              │             <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   │ <span class="accent-gold">Power Automate Flow</span> &mdash; "Create P Intake Story"│              │             <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   │  - Sets Area Path = P\_Intake\&lt;target team&gt;    │──────────────┘             <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   │  - Adds "Related" link back to requester's WIT   │                            <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>   └─────────────────────────────────────────────────┘                            <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>                                                      │ 2. P triage              <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>                                                      ▼                            <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>                                          ┌──────────────────────┐                <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>                                          │ <span class="accent-green">P\TeamA, P\TeamB</span>  │  ← existing      <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>                                          │ team Areas (owners)  │    team        <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>                                          └──────────────────────┘    backlogs   <span class="accent-mute">│</span>
-<span class="accent-mute">│</span>                                                                                 <span class="accent-mute">│</span>
-<span class="accent-mute">└─────────────────────────────────────────────────────────────────────────────────┘</span></div>
+  <!-- Animated solution architecture -->
+  <div id="solutionStage" class="solution-stage" aria-label="Animated architecture diagram showing contributing projects feeding the central P project via a Power Automate front door, with triage routing to team area paths.">
+    <svg viewBox="0 0 1080 440" role="img" xmlns="http://www.w3.org/2000/svg">
+      <!-- Org boundary -->
+      <rect x="14" y="14" width="1052" height="412" rx="14" fill="none" stroke="#30363d" stroke-dasharray="4 4"/>
+      <text x="32" y="38" fill="#8b949e" font-size="12" font-weight="700" letter-spacing="0.5">contoso &mdash; AZURE DEVOPS ORGANIZATION</text>
 
-  <div class="grid-3" style="margin-top:24px;">
-    <div class="feature-card">
-      <h3>🟦 Layer 1 &mdash; Intake Area in P</h3>
-      <p>A dedicated <code>P\_Intake</code> Area Path with child nodes per receiving team. Every submitted story lands here first, regardless of source.</p>
+      <!-- Column labels -->
+      <text x="160" y="68" fill="#79c0ff" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">CONTRIBUTING PROJECTS</text>
+      <text x="540" y="68" fill="#f2cc60" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">FRONT DOOR (AUTOMATION)</text>
+      <text x="900" y="68" fill="#7ee787" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="1">CENTRAL &mdash; P PROJECT</text>
+
+      <!-- Contributing project cards (left) -->
+      <g font-family="-apple-system, Segoe UI, sans-serif">
+        <!-- Business-Ops -->
+        <rect x="50" y="100" width="220" height="74" rx="10" fill="#161b22" stroke="#30363d"/>
+        <circle cx="76" cy="124" r="8" fill="#0078d4"/>
+        <text x="92" y="128" fill="#f0f6fc" font-size="13" font-weight="700">Business-Ops</text>
+        <text x="92" y="146" fill="#8b949e" font-size="11">Project &middot; business team backlog</text>
+        <text x="64" y="166" fill="#8b949e" font-size="10.5">Submitter: User Story idea</text>
+
+        <!-- IT-Other -->
+        <rect x="50" y="200" width="220" height="74" rx="10" fill="#161b22" stroke="#30363d"/>
+        <circle cx="76" cy="224" r="8" fill="#0078d4"/>
+        <text x="92" y="228" fill="#f0f6fc" font-size="13" font-weight="700">IT-Other</text>
+        <text x="92" y="246" fill="#8b949e" font-size="11">Project &middot; IT team backlog</text>
+        <text x="64" y="266" fill="#8b949e" font-size="10.5">Submitter: User Story idea</text>
+
+        <!-- Vendor-Delta -->
+        <rect x="50" y="300" width="220" height="74" rx="10" fill="#161b22" stroke="#30363d"/>
+        <circle cx="76" cy="324" r="8" fill="#6e40c9"/>
+        <text x="92" y="328" fill="#f0f6fc" font-size="13" font-weight="700">Vendor-Delta</text>
+        <text x="92" y="346" fill="#8b949e" font-size="11">Project &middot; external partner</text>
+        <text x="64" y="366" fill="#8b949e" font-size="10.5">Submitter (Stakeholder access)</text>
+      </g>
+
+      <!-- Front door box (center) -->
+      <g font-family="-apple-system, Segoe UI, sans-serif">
+        <rect x="400" y="170" width="280" height="138" rx="12" fill="url(#frontDoorGrad)" stroke="#f2b705" stroke-width="1.5"/>
+        <defs>
+          <linearGradient id="frontDoorGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2a2310"/>
+            <stop offset="100%" stop-color="#1a1308"/>
+          </linearGradient>
+          <marker id="arrowAzure" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#79c0ff"/>
+          </marker>
+          <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7ee787"/>
+          </marker>
+          <marker id="arrowGold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#f2cc60"/>
+          </marker>
+        </defs>
+        <text x="540" y="198" fill="#f2cc60" font-size="13" font-weight="800" text-anchor="middle">⚡ Power Automate Flow</text>
+        <text x="540" y="218" fill="#f0f6fc" font-size="12" text-anchor="middle">&ldquo;Create P Intake Story&rdquo;</text>
+        <line x1="420" y1="232" x2="660" y2="232" stroke="#3a3a1a" stroke-width="1"/>
+        <text x="420" y="252" fill="#c9d1d9" font-size="11">• Form / ADO trigger</text>
+        <text x="420" y="270" fill="#c9d1d9" font-size="11">• Sets Area Path = P\_Intake\&lt;team&gt;</text>
+        <text x="420" y="288" fill="#c9d1d9" font-size="11">• Adds Related link back to submitter</text>
+      </g>
+
+      <!-- P project cluster (right) -->
+      <g font-family="-apple-system, Segoe UI, sans-serif">
+        <rect x="780" y="100" width="260" height="280" rx="12" fill="#0d1d12" stroke="#1a7f37" stroke-width="1.5"/>
+        <text x="910" y="124" fill="#7ee787" font-size="12" font-weight="800" text-anchor="middle">P (single project, single backlog)</text>
+
+        <!-- Pulsing core -->
+        <circle class="sol-pulse" cx="910" cy="200" r="50"/>
+        <circle cx="910" cy="200" r="44" fill="#1a7f37"/>
+        <text x="910" y="196" fill="#fff" font-size="22" font-weight="800" text-anchor="middle">P</text>
+        <text x="910" y="214" fill="#ddf4ff" font-size="10" text-anchor="middle">Intake queue</text>
+
+        <!-- Triage arrow -->
+        <line x1="910" y1="252" x2="910" y2="290" stroke="#7ee787" stroke-width="2" marker-end="url(#arrowGreen)"/>
+        <text x="930" y="276" fill="#7ee787" font-size="10.5" font-weight="600">triage &amp; re-parent</text>
+
+        <!-- Team area paths -->
+        <rect x="800" y="298" width="100" height="56" rx="8" fill="#0e2a18" stroke="#1a7f37"/>
+        <text x="850" y="320" fill="#7ee787" font-size="11.5" font-weight="700" text-anchor="middle">P\TeamA</text>
+        <text x="850" y="338" fill="#8b949e" font-size="10" text-anchor="middle">area path</text>
+
+        <rect x="920" y="298" width="100" height="56" rx="8" fill="#0e2a18" stroke="#1a7f37"/>
+        <text x="970" y="320" fill="#7ee787" font-size="11.5" font-weight="700" text-anchor="middle">P\TeamB</text>
+        <text x="970" y="338" fill="#8b949e" font-size="10" text-anchor="middle">area path</text>
+      </g>
+
+      <!-- Animated flow connectors -->
+      <g fill="none" stroke-width="2.2">
+        <!-- Business-Ops → Front Door -->
+        <path class="sol-flow" d="M 270 137 C 330 137, 350 200, 400 215" stroke="#79c0ff" marker-end="url(#arrowAzure)"/>
+        <!-- IT-Other → Front Door -->
+        <path class="sol-flow" d="M 270 237 L 400 237" stroke="#79c0ff" marker-end="url(#arrowAzure)"/>
+        <!-- Vendor-Delta → Front Door -->
+        <path class="sol-flow" d="M 270 337 C 330 337, 360 280, 400 265" stroke="#b083f0" marker-end="url(#arrowAzure)"/>
+        <!-- Front Door → P core -->
+        <path class="sol-flow" d="M 680 239 C 730 239, 750 205, 866 200" stroke="#f2cc60" marker-end="url(#arrowGold)"/>
+      </g>
+
+      <!-- Numbered step badges (highlight in sequence) -->
+      <g font-family="-apple-system, Segoe UI, sans-serif">
+        <circle class="sol-step-1" cx="335" cy="100" r="14" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="335" y="105" fill="#fff" font-size="12" font-weight="800" text-anchor="middle">1</text>
+        <text x="335" y="86" fill="#8b949e" font-size="10" text-anchor="middle">submit</text>
+
+        <circle class="sol-step-2" cx="540" cy="156" r="14" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="540" y="161" fill="#fff" font-size="12" font-weight="800" text-anchor="middle">2</text>
+        <text x="540" y="142" fill="#8b949e" font-size="10" text-anchor="middle">automate</text>
+
+        <circle class="sol-step-3" cx="745" cy="200" r="14" fill="#21262d" stroke="#30363d" stroke-width="1.5"/>
+        <text x="745" y="205" fill="#fff" font-size="12" font-weight="800" text-anchor="middle">3</text>
+        <text x="745" y="186" fill="#8b949e" font-size="10" text-anchor="middle">land in P</text>
+      </g>
+    </svg>
+    <p class="stage-caption"><strong>1.</strong> Submitter raises a request in their own project &nbsp;→&nbsp; <strong>2.</strong> Power Automate creates the canonical Story in P with correct Area Path + Related link &nbsp;→&nbsp; <strong>3.</strong> P triage re-parents to the owning team&rsquo;s Area Path. Existing 7Pace, Features, Epics, and reporting just work.</p>
+  </div>
+
+  <div class="grid-3 reveal-stagger" id="layerCards" style="margin-top:24px;">
+    <div class="feature-card layer-card">
+      <h3><span class="layer-num l1">1</span>Layer 1 &mdash; Intake Area in P</h3>
+      <p>A dedicated <code>P\_Intake</code> Area Path with child nodes per receiving team. Every submitted story lands here first, regardless of source &mdash; one queue, one backlog of record.</p>
     </div>
-    <div class="feature-card">
-      <h3>🟨 Layer 2 &mdash; Form + Flow Front Door</h3>
-      <p>A Microsoft Form (or ADO work item template) feeding a Power Automate flow that creates the story in P with the right Area Path and a link back to the submitter.</p>
+    <div class="feature-card layer-card">
+      <h3><span class="layer-num l2">2</span>Layer 2 &mdash; Form + Flow Front Door</h3>
+      <p>A Microsoft Form (or ADO work item template) feeding a Power Automate flow that creates the story in P with the right Area Path and a Related link back to the submitter&rsquo;s own project.</p>
     </div>
-    <div class="feature-card">
-      <h3>🟩 Layer 3 &mdash; Triage &amp; Allocation</h3>
-      <p>Existing P triage meeting re-parents stories from <code>_Intake</code> to the owning team&rsquo;s Area. Now your existing allocation model just works.</p>
+    <div class="feature-card layer-card">
+      <h3><span class="layer-num l3">3</span>Layer 3 &mdash; Triage &amp; Allocation</h3>
+      <p>Existing P triage meeting re-parents stories from <code>_Intake</code> to the owning team&rsquo;s Area. Your existing allocation model, capacity planning, and reporting just work.</p>
     </div>
   </div>
 
   <div class="callout callout-success">
-    <p><strong>Why this works for :</strong> It respects the ADO Project boundary instead of fighting it. All P work &mdash; including externally-submitted work &mdash; ends up in the P project where your existing Area Path allocation model, 7Pace time tracking, Features, and Epics already operate. Submitters stay informed via the Related link back to their own project.</p>
+    <p><strong>Why this works for P:</strong> It respects the ADO Project boundary instead of fighting it. All P work &mdash; including externally-submitted work &mdash; ends up in the P project where your existing Area Path allocation model, 7Pace time tracking, Features, and Epics already operate. Submitters stay informed via the Related link back to their own project.</p>
   </div>
 </div></section>
 
@@ -1215,6 +1367,39 @@ HR system  ──▶  Entra ID group  ──▶  ADO security group  ──▶  
   <hr style="border-color:#30363d;margin:24px 0;">
   <p style="font-size:12px;text-align:center;">Azure DevOps Cross-Project Intake Workflow Guide &mdash; Solution Design Document &mdash; Research assisted by the <a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank">MicrosoftDocs <code>azure-devops</code> agent skill</a> &mdash; 2026</p>
 </div></footer>
+
+<script>
+  // Animate the recommended-solution stage and stagger-reveal cards when scrolled into view.
+  (function () {
+    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var stage = document.getElementById('solutionStage');
+    var revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
+
+    if (prefersReduced) {
+      if (stage) stage.classList.add('sol-stage-anim');
+      revealEls.forEach(function (el) { el.classList.add('in-view'); });
+      return;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      if (stage) stage.classList.add('sol-stage-anim');
+      revealEls.forEach(function (el) { el.classList.add('in-view'); });
+      return;
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          if (entry.target === stage) entry.target.classList.add('sol-stage-anim');
+          else entry.target.classList.add('in-view');
+        }
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' });
+
+    if (stage) io.observe(stage);
+    revealEls.forEach(function (el) { io.observe(el); });
+  })();
+</script>
 
 </body>
 </html>
