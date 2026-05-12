@@ -1,0 +1,90 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2016-06-01/Microsoft.Logic.json",
+  "displayName": "P Intake — Mirror Story (Front Door)",
+  "description": "When a User Story tagged 'intake-to-P' is created in any contributing project, mirror it into the P\\Intake area path and link the source item back as Related. Implements Pattern 2 from the Cross-Project Intake Guide.",
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "$connections": { "type": "Object", "defaultValue": {} },
+      "centralProject": { "type": "String", "defaultValue": "P" },
+      "intakeAreaPath": { "type": "String", "defaultValue": "P\\Intake" }
+    },
+    "triggers": {
+      "When_a_work_item_is_created": {
+        "type": "OpenApiConnectionWebhook",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_visualstudioteamservices",
+            "operationId": "OnNewWorkItem",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_visualstudioteamservices"
+          },
+          "parameters": {
+            "organization": "gappiahdemo-msft",
+            "project": "@triggerBody()?['fields']?['System.TeamProject']",
+            "type": "User Story"
+          }
+        }
+      }
+    },
+    "actions": {
+      "Filter_only_intake_tag": {
+        "type": "If",
+        "expression": {
+          "and": [
+            { "contains": [ "@toLower(coalesce(triggerBody()?['fields']?['System.Tags'],''))", "intake-to-p" ] },
+            { "not": { "equals": [ "@triggerBody()?['fields']?['System.TeamProject']", "@parameters('centralProject')" ] } }
+          ]
+        },
+        "actions": {
+          "Create_mirror_story_in_P": {
+            "type": "OpenApiConnection",
+            "inputs": {
+              "host": {
+                "connectionName": "shared_visualstudioteamservices",
+                "operationId": "CreateNewWorkItem",
+                "apiId": "/providers/Microsoft.PowerApps/apis/shared_visualstudioteamservices"
+              },
+              "parameters": {
+                "organization": "gappiahdemo-msft",
+                "project": "@parameters('centralProject')",
+                "type": "User Story",
+                "title": "@{concat('[INTAKE] ', triggerBody()?['fields']?['System.Title'])}",
+                "areaPath": "@parameters('intakeAreaPath')",
+                "tags": "@{concat('intake-to-P; source:', triggerBody()?['fields']?['System.TeamProject'])}",
+                "description": "@{concat('<p><b>Source:</b> ', triggerBody()?['fields']?['System.TeamProject'], ' #', triggerBody()?['id'], '</p><p><b>Submitter:</b> ', triggerBody()?['fields']?['System.CreatedBy'], '</p><hr/>', coalesce(triggerBody()?['fields']?['System.Description'], ''))}"
+              }
+            }
+          },
+          "Link_source_back_as_Related": {
+            "type": "Http",
+            "runAfter": { "Create_mirror_story_in_P": [ "Succeeded" ] },
+            "inputs": {
+              "method": "PATCH",
+              "uri": "@{concat('https://dev.azure.com/gappiahdemo-msft/_apis/wit/workItems/', body('Create_mirror_story_in_P')?['id'], '?api-version=7.1')}",
+              "headers": { "Content-Type": "application/json-patch+json" },
+              "body": [
+                {
+                  "op": "add",
+                  "path": "/relations/-",
+                  "value": {
+                    "rel": "System.LinkTypes.Related",
+                    "url": "@{concat('https://dev.azure.com/gappiahdemo-msft/', triggerBody()?['fields']?['System.TeamProject'], '/_apis/wit/workItems/', triggerBody()?['id'])}",
+                    "attributes": { "comment": "Mirrored from contributing team via Power Automate Front Door" }
+                  }
+                }
+              ],
+              "authentication": {
+                "type": "ActiveDirectoryOAuth",
+                "tenant": "16b3c013-d300-468d-ac64-7eda0820b6d3",
+                "audience": "499b84ac-1321-427f-aa17-267ca6975798",
+                "clientId": "<service-principal-app-id>",
+                "secret": "<service-principal-secret>"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
