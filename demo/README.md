@@ -3,6 +3,19 @@
 A working ADO instantiation of the patterns described in
 [../index.html](../index.html) and narrated by [../walkthrough.html](../walkthrough.html).
 
+## 🚀 One-click submission links (use these in front of the customer)
+
+| Persona                                        | Click to submit                                                                                                                                                                          |
+|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Team-Apollo** engineer (cross-project)       | <https://dev.azure.com/gappiahdemo-msft/Team-Apollo/_workitems/create/User%20Story?%5BSystem.Tags%5D=intake-to-P>                                                                       |
+| **Team-Borealis** engineer (cross-project)     | <https://dev.azure.com/gappiahdemo-msft/Team-Borealis/_workitems/create/User%20Story?%5BSystem.Tags%5D=intake-to-P>                                                                     |
+| **Direct submission into `P\Intake`** (ad-hoc) | <https://dev.azure.com/gappiahdemo-msft/P/_workitems/create/User%20Story?%5BSystem.AreaPath%5D=P%5CIntake&%5BSystem.Tags%5D=intake-to-P>                                                |
+
+These use ADO's documented `…/_workitems/create/{type}?[Field.RefName]=value` deep-link format
+([reference](https://learn.microsoft.com/azure/devops/boards/work-items/work-item-url-hyperlink)) to
+pre-populate `Tags` (and `Area Path` for the central one). The submitter types title + description
+and clicks **Save**.
+
 | Component                | Where it lives                                                                       |
 |--------------------------|--------------------------------------------------------------------------------------|
 | Central intake project   | <https://dev.azure.com/gappiahdemo-msft/P>                                           |
