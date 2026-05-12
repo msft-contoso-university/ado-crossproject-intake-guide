@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en" data-color-mode="light" data-light-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walkthrough &mdash; ADO Cross-Project Intake for the P Project</title>
+  <meta name="description" content="An animated, scene-by-scene walkthrough of how to implement cross-project User Story intake into the central P project in Azure DevOps.">
+  <link href="https://unpkg.com/@primer/css@21/dist/primer.css" rel="stylesheet" />
+  <style>
+    :root {
+      --brand-azure: #0078d4;
+      --brand-azure-dark: #005a9e;
+      --brand-azure-light: #50a6e8;
+      --brand-boards: #f2b705;
+      --brand-success: #2da44e;
+      --brand-success-dark: #1a7f37;
+      --brand-warning: #9a6700;
+      --brand-danger: #cf222e;
+      --brand-purple: #6e40c9;
+      --brand-purple-dark: #553098;
+      --hero-gradient: linear-gradient(135deg, #0d1117 0%, #0a2540 40%, #1c3d6a 100%);
+      --ink: #f0f6fc;
+      --ink-muted: #8b949e;
+      --panel: #0d1117;
+      --panel-2: #161b22;
+      --line: #30363d;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      background: var(--panel);
+      color: var(--ink);
+      scroll-behavior: smooth;
+    }
+    a { color: var(--brand-azure-light); }
+
+    /* ── Top nav ── */
+    .top-nav { background: #0d1117; border-bottom: 1px solid var(--line); padding: 12px 0; position: sticky; top: 0; z-index: 100; }
+    .top-nav a { color: #f0f6fc; text-decoration: none; font-size: 13px; font-weight: 500; padding: 6px 10px; border-radius: 6px; }
+    .top-nav a:hover { background: #21262d; }
+    .nav-inner { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .nav-logo { font-weight: 700; font-size: 15px; margin-right: 12px; color: #f0f6fc; }
+    .nav-back { margin-left: auto; background: var(--brand-azure); }
+    .nav-back:hover { background: var(--brand-azure-dark) !important; }
+
+    /* ── Hero ── */
+    .hero { background: var(--hero-gradient); padding: 72px 0 56px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -40%; right: -15%; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,120,212,0.22) 0%, transparent 70%); border-radius: 50%; }
+    .hero h1 { font-size: 40px; font-weight: 800; line-height: 1.1; margin: 0; max-width: 980px; position: relative; }
+    .hero h1 .highlight { color: var(--brand-azure-light); }
+    .hero h1 .highlight-boards { color: var(--brand-boards); }
+    .hero .subtitle { font-size: 17px; color: var(--ink-muted); max-width: 880px; margin-top: 14px; line-height: 1.6; }
+    .hero .badge-row { margin-top: 22px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Progress rail ── */
+    .progress-rail { position: sticky; top: 49px; z-index: 90; background: rgba(13,17,23,0.92); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+    .rail-inner { display: flex; gap: 4px; padding: 10px 16px; overflow-x: auto; align-items: center; }
+    .rail-step {
+      flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
+      background: #161b22; color: #8b949e; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .rail-step .num { width: 20px; height: 20px; border-radius: 50%; background: #30363d; color: #f0f6fc; display:inline-flex; align-items:center; justify-content:center; font-size: 11px; }
+    .rail-step.active { color: #fff; border-color: var(--brand-azure); background: rgba(0,120,212,0.15); }
+    .rail-step.active .num { background: var(--brand-azure); }
+    .rail-step.done { color: var(--brand-success); border-color: var(--brand-success-dark); }
+    .rail-step.done .num { background: var(--brand-success); }
+
+    /* ── Scenes ── */
+    .scene {
+      min-height: calc(100vh - 110px);
+      padding: 64px 0;
+      border-bottom: 1px solid var(--line);
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .scene.in-view { opacity: 1; transform: translateY(0); }
+    .scene-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: center; }
+    @media (max-width: 980px) { .scene-grid { grid-template-columns: 1fr; } }
+    .scene-eyebrow { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--brand-azure-light); font-weight: 700; }
+    .scene h2 { font-size: 30px; font-weight: 800; margin: 6px 0 14px; line-height: 1.15; }
+    .scene p.lead { font-size: 16px; line-height: 1.65; color: #c9d1d9; margin: 0 0 18px; }
+    .bullets { list-style: none; padding: 0; margin: 16px 0 0; }
+    .bullets li { padding: 8px 0 8px 28px; position: relative; font-size: 14px; line-height: 1.55; color: #c9d1d9; }
+    .bullets li::before { content: '▸'; position: absolute; left: 0; color: var(--brand-azure-light); font-weight: 700; }
+    .cite { font-size: 12px; color: var(--ink-muted); margin-top: 18px; }
+    .cite a { color: var(--brand-azure-light); }
+
+    /* ── Stage (right side visual) ── */
+    .stage {
+      background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px;
+      padding: 24px; min-height: 420px; position: relative; overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    }
+    .stage svg { width: 100%; height: auto; display: block; }
+
+    /* ── Reusable visual bits ── */
+    .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.4px; text-transform: uppercase; }
+    .pill-azure { background: rgba(0,120,212,0.18); color: var(--brand-azure-light); border: 1px solid rgba(0,120,212,0.4); }
+    .pill-gold { background: rgba(242,183,5,0.15); color: var(--brand-boards); border: 1px solid rgba(242,183,5,0.4); }
+    .pill-green { background: rgba(45,164,78,0.15); color: #56d364; border: 1px solid rgba(45,164,78,0.4); }
+    .pill-purple { background: rgba(110,64,201,0.15); color: #b083f0; border: 1px solid rgba(110,64,201,0.4); }
+    .pill-gray { background: #21262d; color: var(--ink-muted); border: 1px solid var(--line); }
+
+    /* ── Scene 1: topology animation ── */
+    @keyframes pulseRing { 0% { r: 6; opacity: 0.9; } 100% { r: 26; opacity: 0; } }
+    @keyframes flowDash { to { stroke-dashoffset: -40; } }
+    .topo-link { stroke-dasharray: 6 6; animation: flowDash 1.6s linear infinite; }
+    .topo-node text { font: 600 12px -apple-system, "Segoe UI", sans-serif; fill: #f0f6fc; }
+    .topo-node .ring { fill: none; stroke: var(--brand-azure); stroke-width: 1.5; transform-origin: center; transform-box: fill-box; animation: pulseRing 1.8s ease-out infinite; }
+    .topo-node .core { fill: var(--brand-azure); }
+    .topo-node .satellite { fill: #21262d; stroke: var(--line); }
+
+    /* ── Scene 2: pattern picker ── */
+    .pattern-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .pattern-tab { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: #161b22; color: #c9d1d9; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .pattern-tab.active { border-color: var(--brand-azure); color: #fff; background: rgba(0,120,212,0.18); }
+    .pattern-panel { display: none; }
+    .pattern-panel.active { display: block; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ── Scene 3: lifecycle swimlanes ── */
+    .swimlane { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #0d1117; }
+    .lane { padding: 14px 10px; border-right: 1px solid var(--line); min-height: 240px; position: relative; }
+    .lane:last-child { border-right: 0; }
+    .lane h5 { margin: 0 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-muted); font-weight: 700; }
+    .ws-card {
+      position: absolute; left: 8px; right: 8px; top: 36px;
+      background: linear-gradient(135deg, #1f2937, #111827);
+      border: 1px solid var(--brand-azure); border-radius: 8px; padding: 10px;
+      box-shadow: 0 8px 30px rgba(0,120,212,0.25);
+      transition: transform 0.7s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.5s ease, border-color 0.5s ease;
+      transform: translateX(0); will-change: transform;
+    }
+    .ws-card .t { font-size: 12px; font-weight: 700; color: #fff; }
+    .ws-card .m { font-size: 11px; color: var(--ink-muted); margin-top: 4px; }
+    .lifecycle-controls { display: flex; gap: 8px; margin-top: 14px; }
+    .btn-line { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--brand-azure); background: transparent; color: var(--brand-azure-light); cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-line:hover { background: rgba(0,120,212,0.12); }
+    .btn-fill { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--brand-azure); background: var(--brand-azure); color: #fff; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-fill:hover { background: var(--brand-azure-dark); }
+
+    /* ── Scene 4: identity flow ── */
+    .id-flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .id-node { background: #161b22; border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; min-width: 140px; text-align: center; transition: all 0.4s; }
+    .id-node.lit { border-color: var(--brand-azure); background: rgba(0,120,212,0.15); box-shadow: 0 0 24px rgba(0,120,212,0.35); }
+    .id-node .role { font-size: 13px; font-weight: 700; color: #fff; }
+    .id-node .sub { font-size: 11px; color: var(--ink-muted); margin-top: 4px; }
+    .id-arrow { color: var(--brand-azure-light); font-size: 22px; }
+
+    /* ── Scene 5: reporting bars ── */
+    .chart { display: flex; align-items: flex-end; gap: 12px; height: 220px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: #0d1117; }
+    .bar { flex: 1; background: linear-gradient(180deg, var(--brand-azure-light), var(--brand-azure)); border-radius: 6px 6px 0 0; height: 0; transition: height 1.2s cubic-bezier(0.5,0,0.2,1); position: relative; }
+    .bar::after { content: attr(data-label); position: absolute; bottom: -22px; left: 0; right: 0; text-align: center; font-size: 11px; color: var(--ink-muted); }
+    .scene.in-view .bar { height: var(--h); }
+
+    /* ── Scene 6: governance timeline ── */
+    .timeline { position: relative; padding: 10px 0 10px 24px; border-left: 2px solid var(--brand-azure); }
+    .tl-event { padding: 10px 0 10px 16px; position: relative; opacity: 0; transform: translateX(-8px); transition: all 0.5s ease; }
+    .tl-event::before { content: ''; position: absolute; left: -31px; top: 16px; width: 14px; height: 14px; border-radius: 50%; background: var(--brand-azure); border: 3px solid var(--panel); box-shadow: 0 0 0 2px var(--brand-azure); }
+    .scene.in-view .tl-event { opacity: 1; transform: none; }
+    .scene.in-view .tl-event:nth-child(1) { transition-delay: 0.1s; }
+    .scene.in-view .tl-event:nth-child(2) { transition-delay: 0.4s; }
+    .scene.in-view .tl-event:nth-child(3) { transition-delay: 0.7s; }
+    .scene.in-view .tl-event:nth-child(4) { transition-delay: 1.0s; }
+    .scene.in-view .tl-event:nth-child(5) { transition-delay: 1.3s; }
+    .tl-event .tl-t { font-size: 13px; font-weight: 700; color: #fff; }
+    .tl-event .tl-d { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+
+    /* ── Scene 7: gantt ── */
+    .gantt { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: #0d1117; border: 1px solid var(--line); border-radius: 10px; }
+    .gantt-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; font-size: 13px; }
+    .gantt-label { color: #c9d1d9; }
+    .gantt-track { position: relative; height: 20px; background: #161b22; border-radius: 4px; overflow: hidden; }
+    .gantt-bar { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, var(--brand-azure), var(--brand-azure-light)); border-radius: 4px; width: 0; transition: width 1.2s cubic-bezier(0.5,0,0.2,1); }
+    .scene.in-view .gantt-bar { width: var(--w); }
+
+    /* ── Scene controls ── */
+    .scene-controls { position: fixed; right: 24px; bottom: 24px; display: flex; gap: 8px; z-index: 80; }
+    .ctrl-btn {
+      width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--brand-azure);
+      background: rgba(13,17,23,0.85); color: var(--brand-azure-light); cursor: pointer; font-size: 18px;
+      backdrop-filter: blur(6px); display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+    .ctrl-btn:hover { background: var(--brand-azure); color: #fff; }
+
+    /* ── Footer ── */
+    .footer { background: #0d1117; color: var(--ink-muted); padding: 32px 0; border-top: 1px solid var(--line); }
+    .footer a { color: var(--brand-azure-light); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene { opacity: 1; transform: none; transition: none; }
+      .topo-link, .topo-node .ring, .ws-card { animation: none !important; transition: none !important; }
+      .bar, .gantt-bar { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top nav -->
+<nav class="top-nav"><div class="container-xl px-3"><div class="nav-inner">
+  <span class="nav-logo">🔷 ADO Cross-Project Intake</span>
+  <a href="index.html">Guide home</a>
+  <a href="index.html#research">Research</a>
+  <a href="index.html#implementation">Implementation</a>
+  <a href="index.html#permissions">Permissions</a>
+  <a href="index.html#enterprise">Governance</a>
+  <a href="index.html" class="nav-back">← Back to full guide</a>
+</div></div></nav>
+
+<!-- Progress rail -->
+<div class="progress-rail"><div class="rail-inner" id="rail">
+  <span class="rail-step" data-target="scene-1"><span class="num">1</span> Topology</span>
+  <span class="rail-step" data-target="scene-2"><span class="num">2</span> Pattern</span>
+  <span class="rail-step" data-target="scene-3"><span class="num">3</span> Lifecycle</span>
+  <span class="rail-step" data-target="scene-4"><span class="num">4</span> Identity</span>
+  <span class="rail-step" data-target="scene-5"><span class="num">5</span> Reporting</span>
+  <span class="rail-step" data-target="scene-6"><span class="num">6</span> Governance</span>
+  <span class="rail-step" data-target="scene-7"><span class="num">7</span> Rollout</span>
+</div></div>
+
+<!-- Hero -->
+<section class="hero"><div class="container-xl px-3">
+  <p style="font-size:13px; text-transform:uppercase; letter-spacing:2px; color:#8b949e; margin-bottom:12px; font-weight:600;">Interactive Walkthrough &mdash; 2026</p>
+  <h1>Watch the <span class="highlight">cross-project intake</span> work end-to-end &mdash; for <span class="highlight-boards">the P project</span></h1>
+  <p class="subtitle">Seven animated scenes that take a single User Story from a contributing team&rsquo;s project, into the central <strong>P</strong> project, through triage, time tracking, and reporting &mdash; with the governance and identity guardrails an enterprise expects. Scroll, or use the buttons in the bottom-right to step through.</p>
+  <div class="badge-row">
+    <span class="pill pill-azure">Azure Boards</span>
+    <span class="pill pill-gold">Inherited Process</span>
+    <span class="pill pill-green">7Pace Compatible</span>
+    <span class="pill pill-purple">Power Automate</span>
+    <span class="pill pill-gray">Scroll-driven</span>
+  </div>
+</div></section>
+
+<!-- ═══ Scene 1: Topology ═══ -->
+<section id="scene-1" class="scene"><div class="container-xl px-3"><div class="scene-grid">
+  <div>
+    <div class="scene-eyebrow">Scene 1 of 7</div>
+    <h2>One central project, many contributing teams</h2>
+    <p class="lead">Inside the <code>contoso</code> organization, the <strong>P</strong> project is the single backlog of record. Other Azure DevOps projects &mdash; business units, IT teams, vendors &mdash; submit work into <strong>P</strong> rather than holding their own copies. Microsoft explicitly recommends <em>using a single project to support your organization or enterprise</em>.</p>
+    <ul class="bullets">
+      <li>Central <strong>P</strong> project owns the canonical User Story</li>
+      <li>Contributing projects use <em>Remote Related</em> links to keep their own context</li>
+      <li>Area Paths inside <strong>P</strong> route work to the right delivery team</li>
+    </ul>
+    <p class="cite">Source: <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/projects/about-projects?view=azure-devops#use-a-single-project" target="_blank" rel="noopener">Microsoft Learn &mdash; Use a single project</a></p>
+  </div>
+  <div class="stage">
+    <svg viewBox="0 0 520 380" role="img" aria-label="Topology of contoso organization with the P project at the center and four contributing projects feeding it.">
+      <!-- Org boundary -->
+      <rect x="10" y="10" width="500" height="360" rx="14" fill="none" stroke="#30363d" stroke-dasharray="4 4"/>
+      <text x="24" y="32" fill="#8b949e" font-size="12" font-weight="700">contoso (Azure DevOps organization)</text>
+
+      <!-- Links (animated dashes) -->
+      <g stroke="#0078d4" stroke-width="2" fill="none" class="topo-link">
+        <line x1="120" y1="110" x2="240" y2="195"/>
+        <line x1="400" y1="110" x2="280" y2="195"/>
+        <line x1="120" y1="290" x2="240" y2="205"/>
+        <line x1="400" y1="290" x2="280" y2="205"/>
+      </g>
+
+      <!-- Central P -->
+      <g class="topo-node" transform="translate(260,200)">
+        <circle class="ring" r="6"/>
+        <circle class="core" r="44"/>
+        <text x="0" y="-2" text-anchor="middle" font-size="14" font-weight="800">P</text>
+        <text x="0" y="16" text-anchor="middle" font-size="10" fill="#ddf4ff">central project</text>
+      </g>
+
+      <!-- Satellites -->
+      <g class="topo-node" transform="translate(110,110)">
+        <circle class="satellite" r="34"/>
+        <text x="0" y="-2" text-anchor="middle">Team-Alpha</text>
+        <text x="0" y="14" text-anchor="middle" font-size="10" fill="#8b949e">project</text>
+      </g>
+      <g class="topo-node" transform="translate(410,110)">
+        <circle class="satellite" r="34"/>
+        <text x="0" y="-2" text-anchor="middle">Team-Bravo</text>
+        <text x="0" y="14" text-anchor="middle" font-size="10" fill="#8b949e">project</text>
+      </g>
+      <g class="topo-node" transform="translate(110,290)">
+        <circle class="satellite" r="34"/>
+        <text x="0" y="-2" text-anchor="middle">BU-Charlie</text>
+        <text x="0" y="14" text-anchor="middle" font-size="10" fill="#8b949e">project</text>
+      </g>
+      <g class="topo-node" transform="translate(410,290)">
+        <circle class="satellite" r="34"/>
+        <text x="0" y="-2" text-anchor="middle">Vendor-Delta</text>
+        <text x="0" y="14" text-anchor="middle" font-size="10" fill="#8b949e">project</text>
+      </g>
+    </svg>
+  </div>
+</div></div></section>
+
+<!-- ═══ Scene 2: Pattern picker ═══ -->
+<section id="scene-2" class="scene"><div class="container-xl px-3"><div class="scene-grid">
+  <div>
+    <div class="scene-eyebrow">Scene 2 of 7</div>
+    <h2>Pick the intake pattern that fits</h2>
+    <p class="lead">Three patterns are viable. The recommended one keeps the canonical work in <strong>P</strong>, because moving work items between projects <em>loses associated history</em>. Click a tab to see how each pattern shapes the topology and the trade-offs.</p>
+    <div class="pattern-tabs" role="tablist">
+      <button class="pattern-tab active" data-pat="1" role="tab">Pattern 1 &mdash; Remote Links (recommended)</button>
+      <button class="pattern-tab" data-pat="2" role="tab">Pattern 2 &mdash; Mirrored Items</button>
+      <button class="pattern-tab" data-pat="3" role="tab">Pattern 3 &mdash; Shared Process</button>
+    </div>
+    <div class="pattern-panel active" data-pat="1">
+      <ul class="bullets">
+        <li>Canonical User Story is created directly in <strong>P</strong></li>
+        <li>Contributing project links its own item via <code>Remote Related</code></li>
+        <li>7Pace, history, audit, and rollups all stay clean</li>
+      </ul>
+    </div>
+    <div class="pattern-panel" data-pat="2">
+      <ul class="bullets">
+        <li>Each project keeps a copy; Power Automate keeps fields in sync</li>
+        <li>Higher operational cost, duplicate state, drift risk</li>
+        <li>Use only when contributing project must own the work item</li>
+      </ul>
+    </div>
+    <div class="pattern-panel" data-pat="3">
+      <ul class="bullets">
+        <li>All projects share one <em>Inherited process</em> (P-Standard)</li>
+        <li>Consistent fields and rules everywhere; no field translation</li>
+        <li>Requires governance over who can change the process</li>
+      </ul>
+    </div>
+    <p class="cite">Source: <a href="https://learn.microsoft.com/en-us/azure/devops/boards/backlogs/move-change-type?view=azure-devops" target="_blank" rel="noopener">Move work items, loss of history</a> &middot; <a href="https://learn.microsoft.com/en-us/azure/devops/boards/queries/link-work-items-support-traceability?view=azure-devops" target="_blank" rel="noopener">Link types incl. Remote Related</a></p>
+  </div>
+  <div class="stage" id="pattern-stage">
+    <svg viewBox="0 0 520 380" id="pattern-svg" role="img" aria-label="Topology that morphs based on the selected intake pattern.">
+      <rect x="10" y="10" width="500" height="360" rx="14" fill="none" stroke="#30363d" stroke-dasharray="4 4"/>
+      <text x="24" y="32" fill="#8b949e" font-size="12" font-weight="700" id="pat-title">Pattern 1 &mdash; Remote Links</text>
+      <g id="pat-graph"></g>
+    </svg>
+  </div>
+</div></div></section>
+
+<!-- ═══ Scene 3: Lifecycle swimlanes ═══ -->
+<section id="scene-3" class="scene"><div class="container-xl px-3"><div class="scene-grid">
+  <div>
+    <div class="scene-eyebrow">Scene 3 of 7</div>
+    <h2>One User Story&rsquo;s journey, end to end</h2>
+    <p class="lead">Watch a single story move across the lanes. The card&rsquo;s color changes as the state advances; 7Pace time accrues against the canonical item in <strong>P</strong>, never duplicated. Press <strong>Play</strong> to step through.</p>
+    <ul class="bullets">
+      <li><span class="pill pill-gray">Submitted</span> &mdash; created via form / Power Automate / API in P</li>
+      <li><span class="pill pill-azure">Triaged</span> &mdash; assigned an Area Path = the receiving P team</li>
+      <li><span class="pill pill-purple">Linked</span> &mdash; <code>Remote Related</code> back to the contributor&rsquo;s item</li>
+      <li><span class="pill pill-gold">In Progress</span> &mdash; 7Pace timesheets capture effort</li>
+      <li><span class="pill pill-green">Closed</span> &mdash; outcome flows back via the link</li>
+    </ul>
+    <div class="lifecycle-controls">
+      <button class="btn-fill" id="lc-play">▶ Play</button>
+      <button class="btn-line" id="lc-reset">Reset</button>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="swimlane" id="swimlane">
+      <div class="lane" data-lane="0"><h5>Submitted</h5></div>
+      <div class="lane" data-lane="1"><h5>Triaged</h5></div>
+      <div class="lane" data-lane="2"><h5>Linked</h5></div>
+      <div class="lane" data-lane="3"><h5>In Progress</h5></div>
+      <div class="lane" data-lane="4"><h5>Closed</h5></div>
+      <div class="ws-card" id="ws-card">
+        <div class="t">User Story #4821</div>
+        <div class="m">Onboard new payroll vendor</div>
+      </div>
+    </div>
+  </div>
+</div></div></section>
+
+<!-- ═══ Scene 4: Identity flow ═══ -->
+<section id="scene-4" class="scene"><div class="container-xl px-3"><div class="scene-grid">
+  <div>
+    <div class="scene-eyebrow">Scene 4 of 7</div>
+    <h2>Identity &amp; least-privilege access</h2>
+    <p class="lead">Contributors authenticate through <strong>Microsoft Entra ID</strong>. Group membership flows from Entra into Azure DevOps; the right project, team, and Area-Path permissions follow automatically. JML (Joiner / Mover / Leaver) is centralized.</p>
+    <ul class="bullets">
+      <li>Entra group <em>P-Intake-Contributors</em> &rarr; ADO group <em>Project Contributors</em></li>
+      <li>Stakeholder access for view-only / submit-only personas</li>
+      <li>Area-Path-scoped permissions for delivery teams</li>
+    </ul>
+    <p class="cite">Source: <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/about-permissions?view=azure-devops" target="_blank" rel="noopener">About permissions, security groups</a> &middot; <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/security/access-levels?view=azure-devops" target="_blank" rel="noopener">Access levels (Stakeholder/Basic)</a></p>
+  </div>
+  <div class="stage">
+    <div class="id-flow" id="id-flow">
+      <div class="id-node"><div class="role">Entra ID</div><div class="sub">P-Intake-Contributors</div></div>
+      <span class="id-arrow">→</span>
+      <div class="id-node"><div class="role">ADO Group</div><div class="sub">Project Contributors</div></div>
+      <span class="id-arrow">→</span>
+      <div class="id-node"><div class="role">Project</div><div class="sub">P (read/write)</div></div>
+      <span class="id-arrow">→</span>
+      <div class="id-node"><div class="role">Area Path</div><div class="sub">P\Team-X (scoped)</div></div>
+    </div>
+  </div>
+</div></div></section>
+
+<!-- ═══ Scene 5: Reporting ═══ -->
+<section id="scene-5" class="scene"><div class="container-xl px-3"><div class="scene-grid">
+  <div>
+    <div class="scene-eyebrow">Scene 5 of 7</div>
+    <h2>Roll up reporting in Power BI</h2>
+    <p class="lead">Because the canonical work lives in <strong>P</strong>, the org-scoped <strong>Analytics OData</strong> endpoint pulls one consistent dataset. Power BI renders lead time, cycle time, time-in-state, and a CFD &mdash; with no manual reconciliation.</p>
+    <ul class="bullets">
+      <li>Org endpoint: <code>https://analytics.dev.azure.com/contoso/_odata/v4.0-preview</code></li>
+      <li>Filter by <code>Project/ProjectName eq 'P'</code> and Area Path</li>
+      <li>One semantic model, refreshed nightly</li>
+    </ul>
+    <p class="cite">Source: <a href="https://learn.microsoft.com/en-us/azure/devops/report/powerbi/access-analytics-power-bi?view=azure-devops" target="_blank" rel="noopener">Connect to Analytics with Power BI</a></p>
+  </div>
+  <div class="stage">
+    <div class="chart">
+      <div class="bar" style="--h: 35%;" data-label="Wk 1"></div>
+      <div class="bar" style="--h: 55%;" data-label="Wk 2"></div>
+      <div class="bar" style="--h: 70%;" data-label="Wk 3"></div>
+      <div class="bar" style="--h: 60%;" data-label="Wk 4"></div>
+      <div class="bar" style="--h: 80%;" data-label="Wk 5"></div>
+      <div class="bar" style="--h: 95%;" data-label="Wk 6"></div>
+    </div>
+    <p style="margin: 32px 0 0; font-size: 12px; color: var(--ink-muted); text-align: center;">Stories closed per week &mdash; Power BI rendering of Analytics OData rollup</p>
+  </div>
+</div></div></section>
+
+<!-- ═══ Scene 6: Governance timeline ═══ -->
+<section id="scene-6" class="scene"><div class="container-xl px-3"><div class="scene-grid">
+  <div>
+    <div class="scene-eyebrow">Scene 6 of 7</div>
+    <h2>Governance, audit, and guardrails</h2>
+    <p class="lead">Every change is observable. Inherited <strong>process rules</strong> enforce data quality on the way in; <strong>service hooks</strong> drive notifications and SLA escalations; the <strong>audit log</strong> retains 90 days and can stream to a SIEM.</p>
+    <ul class="bullets">
+      <li>Required fields and transition rules at the process level</li>
+      <li>Service hook fires on <em>WorkItemCreated</em> &rarr; Teams + Power Automate</li>
+      <li>Audit events streamed to the enterprise SIEM</li>
+    </ul>
+    <p class="cite">Source: <a href="https://learn.microsoft.com/en-us/azure/devops/organizations/audit/azure-devops-auditing?view=azure-devops" target="_blank" rel="noopener">Auditing in Azure DevOps</a> &middot; <a href="https://learn.microsoft.com/en-us/azure/devops/service-hooks/overview?view=azure-devops" target="_blank" rel="noopener">Service hooks</a></p>
+  </div>
+  <div class="stage">
+    <div class="timeline">
+      <div class="tl-event"><div class="tl-t">T+0s &mdash; WorkItemCreated</div><div class="tl-d">Service hook fires; payload posted to Power Automate</div></div>
+      <div class="tl-event"><div class="tl-t">T+1s &mdash; Process rule check</div><div class="tl-d">Required Area Path &amp; Business Justification validated</div></div>
+      <div class="tl-event"><div class="tl-t">T+2s &mdash; Triage notification</div><div class="tl-d">Adaptive card lands in the P-Triage Teams channel</div></div>
+      <div class="tl-event"><div class="tl-t">T+5m &mdash; SLA timer</div><div class="tl-d">If unassigned, escalation reminder is queued</div></div>
+      <div class="tl-event"><div class="tl-t">Continuous &mdash; Audit stream</div><div class="tl-d">All edits emitted to SIEM via the Audit Streaming connector</div></div>
+    </div>
+  </div>
+</div></div></section>
+
+<!-- ═══ Scene 7: Rollout ═══ -->
+<section id="scene-7" class="scene"><div class="container-xl px-3"><div class="scene-grid">
+  <div>
+    <div class="scene-eyebrow">Scene 7 of 7</div>
+    <h2>Phased rollout you can defend</h2>
+    <p class="lead">A four-phase plan lands the program in roughly one quarter. Each phase has clear exit criteria so leadership can pause, expand, or roll back with confidence.</p>
+    <ul class="bullets">
+      <li>Foundation &mdash; process, Area Paths, Entra groups</li>
+      <li>Pilot &mdash; one contributing team, end-to-end flow</li>
+      <li>Scale &mdash; onboard remaining teams; bulk-import backlog</li>
+      <li>Optimize &mdash; KPIs, AI-assisted triage, dashboards</li>
+    </ul>
+    <p class="cite">See full plan in <a href="index.html#implementation">the guide&rsquo;s implementation section</a>.</p>
+  </div>
+  <div class="stage">
+    <div class="gantt">
+      <div class="gantt-row"><span class="gantt-label">Foundation</span><div class="gantt-track"><div class="gantt-bar" style="--w: 22%; left: 0%;"></div></div></div>
+      <div class="gantt-row"><span class="gantt-label">Pilot</span><div class="gantt-track"><div class="gantt-bar" style="--w: 25%; left: 22%;"></div></div></div>
+      <div class="gantt-row"><span class="gantt-label">Scale</span><div class="gantt-track"><div class="gantt-bar" style="--w: 30%; left: 47%;"></div></div></div>
+      <div class="gantt-row"><span class="gantt-label">Optimize</span><div class="gantt-track"><div class="gantt-bar" style="--w: 23%; left: 77%;"></div></div></div>
+      <div class="gantt-row" style="margin-top: 8px;"><span></span><div style="display:flex; justify-content:space-between; font-size:11px; color: var(--ink-muted);"><span>Wk 1</span><span>Wk 4</span><span>Wk 8</span><span>Wk 12</span></div></div>
+    </div>
+    <p style="margin: 24px 0 0; text-align:center;">
+      <a href="index.html" class="btn-fill" style="display:inline-block; text-decoration:none;">Open the full guide →</a>
+    </p>
+  </div>
+</div></div></section>
+
+<!-- Scene controls -->
+<div class="scene-controls" aria-label="Scene navigation">
+  <button class="ctrl-btn" id="prev-btn" title="Previous scene" aria-label="Previous scene">↑</button>
+  <button class="ctrl-btn" id="next-btn" title="Next scene" aria-label="Next scene">↓</button>
+</div>
+
+<!-- Footer -->
+<footer class="footer"><div class="container-xl px-3">
+  <p style="margin:0; font-size:13px;">
+    Walkthrough companion to the <a href="index.html">ADO Cross-Project Intake guide</a>.
+    Authored via the <a href="https://github.com/microsoft/hve-core/tree/main/plugins/hve-core/agents/hve-core" target="_blank" rel="noopener">microsoft/hve-core</a> agent pack and grounded in the <a href="https://github.com/MicrosoftDocs/Agent-Skills/tree/main/skills/azure-devops" target="_blank" rel="noopener">MicrosoftDocs azure-devops skill</a>.
+  </p>
+</div></footer>
+
+<script>
+  // ── Scroll-driven scene activation + progress rail
+  const scenes = Array.from(document.querySelectorAll('.scene'));
+  const railSteps = Array.from(document.querySelectorAll('.rail-step'));
+  const setActiveScene = (idx) => {
+    railSteps.forEach((s, i) => {
+      s.classList.toggle('active', i === idx);
+      s.classList.toggle('done', i < idx);
+    });
+  };
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in-view');
+        const idx = scenes.indexOf(e.target);
+        if (idx >= 0) setActiveScene(idx);
+      }
+    });
+  }, { threshold: 0.35 });
+  scenes.forEach(s => io.observe(s));
+
+  // Rail click -> scroll
+  railSteps.forEach(s => s.addEventListener('click', () => {
+    document.getElementById(s.dataset.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+
+  // Prev/Next buttons
+  const goRel = (delta) => {
+    const cur = scenes.findIndex(s => s.classList.contains('in-view') && railSteps[scenes.indexOf(s)].classList.contains('active'));
+    const target = Math.max(0, Math.min(scenes.length - 1, (cur < 0 ? 0 : cur) + delta));
+    scenes[target].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  document.getElementById('prev-btn').addEventListener('click', () => goRel(-1));
+  document.getElementById('next-btn').addEventListener('click', () => goRel(1));
+
+  // ── Scene 2: pattern picker
+  const tabs = document.querySelectorAll('.pattern-tab');
+  const panels = document.querySelectorAll('.pattern-panel');
+  const patTitle = document.getElementById('pat-title');
+  const patGraph = document.getElementById('pat-graph');
+  const renderPattern = (n) => {
+    patTitle.textContent = n === '1' ? 'Pattern 1 — Remote Links (recommended)'
+                       : n === '2' ? 'Pattern 2 — Mirrored Items'
+                                   : 'Pattern 3 — Shared Process';
+    let svg = '';
+    const central = `<g transform="translate(260,200)">
+      <circle r="44" fill="#0078d4"/>
+      <text text-anchor="middle" y="-2" fill="#fff" font-size="14" font-weight="800">P</text>
+      <text text-anchor="middle" y="16" fill="#ddf4ff" font-size="10">central</text>
+    </g>`;
+    const sat = (x, y, label, fill = '#21262d') => `<g transform="translate(${x},${y})">
+      <circle r="32" fill="${fill}" stroke="#30363d"/>
+      <text text-anchor="middle" y="-2" fill="#f0f6fc" font-size="11" font-weight="600">${label}</text>
+      <text text-anchor="middle" y="14" fill="#8b949e" font-size="10">project</text>
+    </g>`;
+    if (n === '1') {
+      svg = `
+        <g stroke="#0078d4" stroke-width="2" fill="none" class="topo-link">
+          <line x1="120" y1="110" x2="240" y2="195"/>
+          <line x1="400" y1="110" x2="280" y2="195"/>
+          <line x1="120" y1="290" x2="240" y2="205"/>
+          <line x1="400" y1="290" x2="280" y2="205"/>
+        </g>
+        ${central}
+        ${sat(110,110,'Team-Alpha')}
+        ${sat(410,110,'Team-Bravo')}
+        ${sat(110,290,'BU-Charlie')}
+        ${sat(410,290,'Vendor-Delta')}
+        <text x="260" y="362" text-anchor="middle" fill="#8b949e" font-size="11">Solid links = Remote Related; canonical work item lives in P</text>`;
+    } else if (n === '2') {
+      svg = `
+        <g stroke="#9a6700" stroke-width="2" stroke-dasharray="2 4" fill="none">
+          <line x1="120" y1="110" x2="240" y2="195"/>
+          <line x1="400" y1="110" x2="280" y2="195"/>
+        </g>
+        ${central}
+        ${sat(110,110,'Team-Alpha','#1f1a07')}
+        ${sat(410,110,'Team-Bravo','#1f1a07')}
+        ${sat(260,330,'Power Automate','#1c1426')}
+        <text x="260" y="362" text-anchor="middle" fill="#8b949e" font-size="11">Each project mirrors the item; flows reconcile both copies</text>`;
+    } else {
+      svg = `
+        <rect x="60" y="80" width="400" height="240" rx="14" fill="none" stroke="#6e40c9" stroke-dasharray="4 4"/>
+        <text x="260" y="74" text-anchor="middle" fill="#b083f0" font-size="11" font-weight="700">Shared Inherited process: P-Standard</text>
+        ${central}
+        ${sat(120,140,'Team-Alpha')}
+        ${sat(400,140,'Team-Bravo')}
+        ${sat(120,280,'BU-Charlie')}
+        ${sat(400,280,'Vendor-Delta')}
+        <text x="260" y="362" text-anchor="middle" fill="#8b949e" font-size="11">All projects share fields, rules, and states</text>`;
+    }
+    patGraph.innerHTML = svg;
+  };
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.toggle('active', x === t));
+    const n = t.dataset.pat;
+    panels.forEach(p => p.classList.toggle('active', p.dataset.pat === n));
+    renderPattern(n);
+  }));
+  renderPattern('1');
+
+  // ── Scene 3: lifecycle
+  const card = document.getElementById('ws-card');
+  const lanes = document.querySelectorAll('#swimlane .lane');
+  const stateColors = ['#30363d', '#0078d4', '#6e40c9', '#f2b705', '#2da44e'];
+  let stage = 0;
+  const moveCard = (i) => {
+    const lane = lanes[i].getBoundingClientRect();
+    const ref  = lanes[0].getBoundingClientRect();
+    const dx = lane.left - ref.left;
+    card.style.transform = `translateX(${dx}px)`;
+    card.style.borderColor = stateColors[i];
+    card.style.boxShadow = `0 8px 30px ${stateColors[i]}55`;
+  };
+  const playLifecycle = () => {
+    stage = 0;
+    moveCard(0);
+    const tick = () => {
+      stage++;
+      if (stage >= lanes.length) return;
+      moveCard(stage);
+      setTimeout(tick, 1200);
+    };
+    setTimeout(tick, 600);
+  };
+  document.getElementById('lc-play').addEventListener('click', playLifecycle);
+  document.getElementById('lc-reset').addEventListener('click', () => { stage = 0; moveCard(0); });
+  // Auto-play once when scene 3 enters view
+  const lcObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { playLifecycle(); lcObserver.disconnect(); } });
+  }, { threshold: 0.5 });
+  lcObserver.observe(document.getElementById('scene-3'));
+
+  // ── Scene 4: identity sequential lighting
+  const idNodes = document.querySelectorAll('#id-flow .id-node');
+  const lightId = () => {
+    idNodes.forEach((n, i) => setTimeout(() => {
+      idNodes.forEach(x => x.classList.remove('lit'));
+      n.classList.add('lit');
+    }, i * 700));
+  };
+  const idObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { lightId(); idObserver.disconnect(); } });
+  }, { threshold: 0.5 });
+  idObserver.observe(document.getElementById('scene-4'));
+</script>
+
+</body>
+</html>
